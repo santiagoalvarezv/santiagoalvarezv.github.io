@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Santiago Alvarez — Electrical and Electronic Engineering student building embedded systems, robotics, and intelligent technology." />
+  <meta name="theme-color" content="#0b0d12" />
+  <title>Santiago Alvarez | Engineering Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --panel: #11141c;
+      --panel-2: #171b25;
+      --text: #f2f4f8;
+      --muted: #a1a8b8;
+      --line: rgba(255,255,255,.11);
+      --accent: #a8f06a;
+      --accent-2: #75d5c4;
+      --max: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Manrope", system-ui, sans-serif; line-height: 1.65;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    .wrap { width: min(var(--max), calc(100% - 44px)); margin-inline: auto; }
+    .mono { font-family: "DM Mono", monospace; letter-spacing: .02em; }
+    .muted { color: var(--muted); }
+    .topbar {
+      position: sticky; top: 0; z-index: 10; backdrop-filter: blur(18px);
+      background: rgba(11,13,18,.82); border-bottom: 1px solid var(--line);
+    }
+    .nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { font-weight: 800; letter-spacing: -.06em; font-size: 1.08rem; }
+    .brand span { color: var(--accent); }
+    .navlinks { display: flex; align-items: center; gap: 26px; color: var(--muted); font-size: .87rem; }
+    .navlinks a:hover, .text-link:hover { color: var(--accent); }
+    .nav-cta { border: 1px solid var(--line); padding: 9px 14px; border-radius: 8px; color: var(--text) !important; }
+    .hero { padding: 100px 0 78px; position: relative; overflow: hidden; }
+    .hero::after {
+      content: ""; position: absolute; width: 520px; height: 520px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(168,240,106,.12), transparent 68%);
+      top: -170px; right: -110px; pointer-events: none;
+    }
+    .eyebrow { color: var(--accent); text-transform: uppercase; font-size: .75rem; letter-spacing: .17em; }
+    h1 { font-size: clamp(3rem, 8vw, 6.5rem); line-height: .99; letter-spacing: -.075em; margin: 22px 0; max-width: 900px; }
+    h1 .stroke { color: transparent; -webkit-text-stroke: 1px rgba(242,244,248,.72); }
+    .hero-copy { max-width: 660px; color: var(--muted); font-size: clamp(1rem, 2vw, 1.15rem); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+    .btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 17px; border-radius: 9px; font-weight: 800; font-size: .9rem; transition: transform .2s, background .2s; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--accent); color: #10150b; }
+    .btn-secondary { border: 1px solid var(--line); background: rgba(255,255,255,.02); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 50px; color: var(--muted); font-size: .82rem; }
+    .hero-meta span::before { content: "↗"; color: var(--accent); margin-right: 8px; }
+    section { padding: 78px 0; border-top: 1px solid var(--line); }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 30px; }
+    .section-index { color: var(--accent); font-size: .75rem; }
+    h2 { font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -.065em; line-height: 1.1; margin: 8px 0 0; }
+    .section-intro { max-width: 450px; color: var(--muted); margin: 0; font-size: .94rem; }
+    .about-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 42px; align-items: start; }
+    .about-copy { color: var(--muted); font-size: 1.03rem; }
+    .about-copy strong { color: var(--text); font-weight: 700; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-height: 130px; }
+    .stat b { display: block; color: var(--accent); font-size: 1.65rem; letter-spacing: -.06em; }
+    .stat span { color: var(--muted); font-size: .8rem; }
+    .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .project { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); transition: transform .22s, border-color .22s; }
+    .project:hover { transform: translateY(-4px); border-color: rgba(168,240,106,.5); }
+    .project-visual { height: 185px; position: relative; overflow: hidden; background: #151a22; display: grid; place-items: center; }
+    .project-visual svg { width: 100%; height: 100%; }
+    .project-no { position: absolute; top: 14px; left: 16px; font-size: .72rem; color: rgba(255,255,255,.65); }
+    .project-body { padding: 23px; }
+    .project-type { color: var(--accent); font-size: .7rem; text-transform: uppercase; letter-spacing: .13em; }
+    h3 { margin: 8px 0; font-size: 1.22rem; letter-spacing: -.04em; }
+    .project-body p { color: var(--muted); font-size: .9rem; margin: 0 0 18px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+    .tag { border: 1px solid var(--line); color: #c9cfdb; border-radius: 5px; padding: 4px 8px; font: .68rem "DM Mono", monospace; }
+    .text-link { color: var(--text); font-size: .83rem; font-weight: 800; }
+    .text-link span { color: var(--accent); margin-left: 5px; }
+    .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .skill-card { padding: 22px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; }
+    .skill-icon { color: var(--accent); font-size: 1.3rem; }
+    .skill-card h3 { font-size: 1rem; margin-top: 12px; }
+    .skill-card p { margin: 0; color: var(--muted); font-size: .85rem; }
+    .timeline { border-left: 1px solid rgba(168,240,106,.5); margin-left: 8px; padding-left: 26px; display: grid; gap: 28px; }
+    .timeline-item { position: relative; }
+    .timeline-item::before { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); left: -31px; top: 8px; box-shadow: 0 0 0 5px rgba(168,240,106,.1); }
+    .timeline-date { font-size: .72rem; color: var(--accent); }
+    .timeline-item h3 { margin: 5px 0; }
+    .timeline-item p { color: var(--muted); font-size: .9rem; margin: 0; }
+    .contact-panel { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(130deg, #171d24, #10131a); padding: clamp(26px, 5vw, 54px); display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+    .contact-panel h2 { max-width: 600px; }
+    .contact-panel p { color: var(--muted); max-width: 500px; }
+    footer { padding: 25px 0 36px; color: var(--muted); font-size: .78rem; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+    .socials { display: flex; gap: 18px; }
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
+    @media (max-width: 760px) {
+      .wrap { width: min(var(--max), calc(100% - 30px)); }
+      .nav { min-height: 64px; }
+      .navlinks { gap: 13px; font-size: .77rem; }
+      .navlinks a:not(.nav-cta) { display: none; }
+      .hero { padding: 76px 0 58px; }
+      .hero-meta { gap: 12px 18px; margin-top: 36px; }
+      section { padding: 58px 0; }
+      .section-head { align-items: start; flex-direction: column; }
+      .about-grid, .projects { grid-template-columns: 1fr; }
+      .skills-grid { grid-template-columns: 1fr; }
+      .project-visual { height: 170px; }
+      .contact-panel { align-items: start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    QUICK CUSTOMISATION:
+    1) Replace "Santiago Alvarez" if you want a different display name.
+    2) Replace YOUR_GITHUB, YOUR_LINKEDIN and YOUR_EMAIL below.
+    3) Replace the example project links with your real repositories.
+    4) To add your CV, upload a PDF named "cv.pdf" to this same repository.
+  -->
+  <header class="topbar">
+    <nav class="nav wrap" aria-label="Main navigation">
+      <a class="brand" href="#home">SA<span>.</span></a>
+      <div class="navlinks">
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#skills">Skills</a>
+        <a href="#experience">Experience</a>
+        <a class="nav-cta" href="#contact">Get in touch ↗</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home" style="border-top:0">
+      <div class="wrap">
+        <div class="eyebrow mono">Electrical & Electronic Engineering · Nottingham, UK</div>
+        <h1>Building things<br>that <span class="stroke">think.</span></h1>
+        <p class="hero-copy">I'm Santiago Alvarez, an Electrical and Electronic Engineering student at the University of Nottingham interested in embedded systems, robotics, control engineering, and AI.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#projects">Explore my work <span>↘</span></a>
+          <a class="btn btn-secondary" href="cv.pdf" target="_blank" rel="noopener">View CV <span>↗</span></a>
+        </div>
+        <div class="hero-meta mono">
+          <span>Electrical engineering</span>
+          <span>Embedded systems</span>
+          <span>AI & intelligent systems</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="section-index mono">01 / ABOUT</div><h2>Curious by design.</h2></div>
+          <p class="section-intro">Engineering sits at the intersection of physical systems, software, and creative problem-solving.</p>
+        </div>
+        <div class="about-grid reveal">
+          <div class="about-copy">
+            <p>I'm studying <strong>Electrical and Electronic Engineering at the University of Nottingham</strong>. I enjoy understanding how systems work from the hardware up — then using software to make them smarter, more reliable, and more useful.</p>
+            <p>My current interests include <strong>embedded programming, electronics, robotics, control systems, and machine learning</strong>. I’m keen to keep building practical projects, learning from teams, and documenting the engineering process properly.</p>
+            <p class="mono" style="font-size:.77rem;color:var(--accent)">CURRENTLY LEARNING → BUILDING → TESTING → ITERATING</p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat"><b>EEE</b><span>University of Nottingham</span></div>
+            <div class="stat"><b>C / C++</b><span>Programming foundations</span></div>
+            <div class="stat"><b>Hardware</b><span>Microcontrollers & sensors</span></div>
+            <div class="stat"><b>AI / ML</b><span>Growing area of focus</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="section-index mono">02 / SELECTED WORK</div><h2>Projects in progress.</h2></div>
+          <p class="section-intro">A growing collection of practical engineering work. Replace these sample descriptions and links with your actual results as you publish them.</p>
+        </div>
+        <div class="projects">
+          <article class="project reveal">
+            <div class="project-visual">
+              <span class="project-no mono">PROJECT 001</span>
+              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract circuit board illustration">
+                <defs><pattern id="grid1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#2a3440" stroke-width="1"/></pattern></defs>
+                <rect width="600" height="300" fill="#121a22"/><rect width="600" height="300" fill="url(#grid1)"/>
+                <g stroke="#a8f06a" stroke-width="3" fill="none" opacity=".8"><path d="M50 230H170V170H230V90H285"/><path d="M360 70H420V130H520V220H440"/><path d="M80 60H150V105H200"/><path d="M285 90V145H350V210H400"/></g>
+                <g fill="#a8f06a"><circle cx="50" cy="230" r="5"/><circle cx="285" cy="90" r="5"/><circle cx="360" cy="70" r="5"/><circle cx="440" cy="220" r="5"/><circle cx="80" cy="60" r="5"/></g>
+                <rect x="230" y="120" width="130" height="80" rx="7" fill="#202b35" stroke="#75d5c4" stroke-width="2"/>
+                <g stroke="#75d5c4" stroke-width="3"><path d="M220 135h10m-10 15h10m-10 15h10m-10 15h10m130-45h10m-10 15h10m-10 15h10m-10 15h10"/></g>
+                <text x="295" y="153" text-anchor="middle" fill="#f2f4f8" font-size="14" font-family="monospace">ESP32</text><text x="295" y="175" text-anchor="middle" fill="#a8f06a" font-size="11" font-family="monospace">CONTROL</text>
+              </svg>
+            </div>
+            <div class="project-body">
+              <div class="project-type mono">Embedded systems · Robotics</div>
+              <h3>ESP32 Robotics & Sensor Integration</h3>
+              <p>Microcontroller-based robotics exploring sensor input, motor control, and real-time behaviour. Add your wiring diagrams, code, test results, and lessons learned here.</p>
+              <div class="tags"><span class="tag">ESP32</span><span class="tag">C/C++</span><span class="tag">Sensors</span><span class="tag">Control</span></div>
+              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">View project <span>↗</span></a>
+            </div>
+          </article>
+
+          <article class="project reveal">
+            <div class="project-visual">
+              <span class="project-no mono">PROJECT 002</span>
+              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract motorsport telemetry illustration">
+                <rect width="600" height="300" fill="#15151d"/>
+                <g stroke="#343b4c" stroke-width="1"><path d="M0 50H600M0 100H600M0 150H600M0 200H600M0 250H600"/><path d="M60 0V300M120 0V300M180 0V300M240 0V300M300 0V300M360 0V300M420 0V300M480 0V300M540 0V300"/></g>
+                <path d="M20 210 C90 205 105 120 170 155 S270 230 330 135 S425 85 470 120 S535 155 580 55" stroke="#a8f06a" stroke-width="4" fill="none"/>
+                <path d="M20 240 C100 245 130 185 190 200 S285 145 340 180 S445 220 500 175 S555 190 580 160" stroke="#75d5c4" stroke-width="3" fill="none" stroke-dasharray="7 7"/>
+                <g fill="#a8f06a"><circle cx="170" cy="155" r="5"/><circle cx="330" cy="135" r="5"/><circle cx="470" cy="120" r="5"/></g>
+                <text x="28" y="30" fill="#a1a8b8" font-size="12" font-family="monospace">TELEMETRY / SIGNAL</text>
+              </svg>
+            </div>
+            <div class="project-body">
+              <div class="project-type mono">Motorsport · Electronics</div>
+              <h3>Formula Student — LV Electronics</h3>
+              <p>Document your low-voltage box responsibilities, design decisions, integration, verification, and teamwork as the project develops. Only include work you have actually completed.</p>
+              <div class="tags"><span class="tag">Electronics</span><span class="tag">Systems</span><span class="tag">Testing</span><span class="tag">Teamwork</span></div>
+              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">Project notes <span>↗</span></a>
+            </div>
+          </article>
+
+          <article class="project reveal">
+            <div class="project-visual">
+              <span class="project-no mono">PROJECT 003</span>
+              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract control systems graph">
+                <rect width="600" height="300" fill="#121a22"/>
+                <g stroke="#2b3542" stroke-width="1"><path d="M60 35V250H555"/><path d="M60 80H555M60 125H555M60 170H555M60 215H555" stroke-dasharray="3 6"/><path d="M150 35V250M240 35V250M330 35V250M420 35V250M510 35V250" stroke-dasharray="3 6"/></g>
+                <path d="M60 230 C95 230 110 210 140 120 S200 70 235 125 S300 190 345 150 S410 105 455 125 S515 145 555 110" fill="none" stroke="#a8f06a" stroke-width="4"/>
+                <path d="M60 230 L555 230" stroke="#75d5c4" stroke-width="2" stroke-dasharray="5 6"/>
+                <text x="75" y="55" fill="#a1a8b8" font-size="12" font-family="monospace">SYSTEM RESPONSE</text>
+              </svg>
+            </div>
+            <div class="project-body">
+              <div class="project-type mono">Control engineering</div>
+              <h3>Control Systems & Data Analysis</h3>
+              <p>Use this space for a documented control, signal-processing, or measurement project: explain the model, approach, experiments, and what the data showed.</p>
+              <div class="tags"><span class="tag">Modelling</span><span class="tag">Signals</span><span class="tag">Python</span></div>
+              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">View project <span>↗</span></a>
+            </div>
+          </article>
+
+          <article class="project reveal">
+            <div class="project-visual">
+              <span class="project-no mono">PROJECT 004</span>
+              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract machine learning data visualization">
+                <rect width="600" height="300" fill="#15151d"/>
+                <g stroke="#2b3542" stroke-width="1"><path d="M45 45H555M45 95H555M45 145H555M45 195H555M45 245H555"/><path d="M95 25V265M195 25V265M295 25V265M395 25V265M495 25V265"/></g>
+                <g fill="#75d5c4" opacity=".9"><circle cx="105" cy="205" r="7"/><circle cx="135" cy="175" r="6"/><circle cx="165" cy="220" r="5"/><circle cx="190" cy="150" r="7"/><circle cx="215" cy="185" r="5"/><circle cx="240" cy="125" r="7"/></g>
+                <g fill="#a8f06a" opacity=".95"><circle cx="330" cy="95" r="7"/><circle cx="360" cy="130" r="6"/><circle cx="390" cy="75" r="7"/><circle cx="415" cy="110" r="5"/><circle cx="445" cy="65" r="6"/><circle cx="480" cy="95" r="7"/></g>
+                <path d="M75 240L260 100M260 100L500 45" stroke="#f2f4f8" stroke-width="2" stroke-dasharray="5 6" opacity=".5"/>
+                <text x="28" y="25" fill="#a1a8b8" font-size="12" font-family="monospace">DATA / LEARNING</text>
+              </svg>
+            </div>
+            <div class="project-body">
+              <div class="project-type mono">AI · Machine learning</div>
+              <h3>AI & Intelligent Systems</h3>
+              <p>A future home for machine-learning experiments and engineering applications. Add this section when you have a real project, dataset, evaluation, and results to share.</p>
+              <div class="tags"><span class="tag">Python</span><span class="tag">Machine learning</span><span class="tag">Data</span></div>
+              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">View GitHub <span>↗</span></a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="section-index mono">03 / TOOLKIT</div><h2>Skills I'm building.</h2></div>
+          <p class="section-intro">Keep this honest and update it as you gain experience. Be ready to explain every skill listed in an interview.</p>
+        </div>
+        <div class="skills-grid">
+          <article class="skill-card reveal"><div class="skill-icon">⌘</div><h3>Programming</h3><p>C, C++, Python fundamentals, debugging, algorithms, and version control.</p></article>
+          <article class="skill-card reveal"><div class="skill-icon">⌁</div><h3>Electronics & Embedded</h3><p>Microcontrollers, sensors, circuit fundamentals, GPIO, and hardware/software integration.</p></article>
+          <article class="skill-card reveal"><div class="skill-icon">⌖</div><h3>Systems & Control</h3><p>Measurement, feedback concepts, testing, data analysis, and systematic troubleshooting.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="experience">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="section-index mono">04 / EXPERIENCE</div><h2>Learning by doing.</h2></div>
+          <p class="section-intro">A simple timeline for your education, student teams, and relevant experience.</p>
+        </div>
+        <div class="timeline reveal">
+          <div class="timeline-item">
+            <div class="timeline-date mono">2026 — PRESENT</div>
+            <h3>BEng Electrical & Electronic Engineering</h3>
+            <p>University of Nottingham · Building foundations in electronics, power and energy, systems, mathematics, and programming.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-date mono">2026 — PRESENT</div>
+            <h3>Student Engineering Projects</h3>
+            <p>Formula Student and engineering team projects. Add your official team title, responsibilities, and measurable contributions as they develop.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-date mono">ONGOING</div>
+            <h3>Independent Learning</h3>
+            <p>Developing practical programming and embedded systems skills through hands-on builds, experiments, and technical documentation.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="wrap">
+        <div class="contact-panel reveal">
+          <div>
+            <div class="section-index mono">05 / CONTACT</div>
+            <h2>Have a project in mind?</h2>
+            <p>I'm interested in engineering projects, internships, and opportunities to learn from people building useful technology. Feel free to reach out.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="mailto:YOUR_EMAIL">Email me ↗</a>
+              <a class="btn btn-secondary" href="https://www.linkedin.com/in/YOUR_LINKEDIN" target="_blank" rel="noopener">LinkedIn ↗</a>
+              <a class="btn btn-secondary" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">GitHub ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>© <span id="year"></span> Santiago Alvarez. Built with care.</span>
+      <span class="mono">DESIGNED TO KEEP ITERATING ↗</span>
+    </div>
+  </footer>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const items = document.querySelectorAll(".reveal");
+    if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      items.forEach((item) => observer.observe(item));
+    } else {
+      items.forEach((item) => item.classList.add("visible"));
+    }
+  </script>
+</body>
+</html>
