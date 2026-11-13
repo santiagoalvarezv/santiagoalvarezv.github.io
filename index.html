@@ -1,361 +1,650 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Santiago Alvarez — Electrical and Electronic Engineering student building embedded systems, robotics, and intelligent technology." />
-  <meta name="theme-color" content="#0b0d12" />
-  <title>Santiago Alvarez | Engineering Portfolio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0b0d12;
-      --panel: #11141c;
-      --panel-2: #171b25;
-      --text: #f2f4f8;
-      --muted: #a1a8b8;
-      --line: rgba(255,255,255,.11);
-      --accent: #a8f06a;
-      --accent-2: #75d5c4;
-      --max: 1120px;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 88px; }
-    body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font-family: "Manrope", system-ui, sans-serif; line-height: 1.65;
-    }
-    a { color: inherit; text-decoration: none; }
-    button, a { -webkit-tap-highlight-color: transparent; }
-    .wrap { width: min(var(--max), calc(100% - 44px)); margin-inline: auto; }
-    .mono { font-family: "DM Mono", monospace; letter-spacing: .02em; }
-    .muted { color: var(--muted); }
-    .topbar {
-      position: sticky; top: 0; z-index: 10; backdrop-filter: blur(18px);
-      background: rgba(11,13,18,.82); border-bottom: 1px solid var(--line);
-    }
-    .nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-    .brand { font-weight: 800; letter-spacing: -.06em; font-size: 1.08rem; }
-    .brand span { color: var(--accent); }
-    .navlinks { display: flex; align-items: center; gap: 26px; color: var(--muted); font-size: .87rem; }
-    .navlinks a:hover, .text-link:hover { color: var(--accent); }
-    .nav-cta { border: 1px solid var(--line); padding: 9px 14px; border-radius: 8px; color: var(--text) !important; }
-    .hero { padding: 100px 0 78px; position: relative; overflow: hidden; }
-    .hero::after {
-      content: ""; position: absolute; width: 520px; height: 520px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(168,240,106,.12), transparent 68%);
-      top: -170px; right: -110px; pointer-events: none;
-    }
-    .eyebrow { color: var(--accent); text-transform: uppercase; font-size: .75rem; letter-spacing: .17em; }
-    h1 { font-size: clamp(3rem, 8vw, 6.5rem); line-height: .99; letter-spacing: -.075em; margin: 22px 0; max-width: 900px; }
-    h1 .stroke { color: transparent; -webkit-text-stroke: 1px rgba(242,244,248,.72); }
-    .hero-copy { max-width: 660px; color: var(--muted); font-size: clamp(1rem, 2vw, 1.15rem); }
-    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
-    .btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 17px; border-radius: 9px; font-weight: 800; font-size: .9rem; transition: transform .2s, background .2s; }
-    .btn:hover { transform: translateY(-2px); }
-    .btn-primary { background: var(--accent); color: #10150b; }
-    .btn-secondary { border: 1px solid var(--line); background: rgba(255,255,255,.02); }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 50px; color: var(--muted); font-size: .82rem; }
-    .hero-meta span::before { content: "↗"; color: var(--accent); margin-right: 8px; }
-    section { padding: 78px 0; border-top: 1px solid var(--line); }
-    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 30px; }
-    .section-index { color: var(--accent); font-size: .75rem; }
-    h2 { font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -.065em; line-height: 1.1; margin: 8px 0 0; }
-    .section-intro { max-width: 450px; color: var(--muted); margin: 0; font-size: .94rem; }
-    .about-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 42px; align-items: start; }
-    .about-copy { color: var(--muted); font-size: 1.03rem; }
-    .about-copy strong { color: var(--text); font-weight: 700; }
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-height: 130px; }
-    .stat b { display: block; color: var(--accent); font-size: 1.65rem; letter-spacing: -.06em; }
-    .stat span { color: var(--muted); font-size: .8rem; }
-    .projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .project { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); transition: transform .22s, border-color .22s; }
-    .project:hover { transform: translateY(-4px); border-color: rgba(168,240,106,.5); }
-    .project-visual { height: 185px; position: relative; overflow: hidden; background: #151a22; display: grid; place-items: center; }
-    .project-visual svg { width: 100%; height: 100%; }
-    .project-no { position: absolute; top: 14px; left: 16px; font-size: .72rem; color: rgba(255,255,255,.65); }
-    .project-body { padding: 23px; }
-    .project-type { color: var(--accent); font-size: .7rem; text-transform: uppercase; letter-spacing: .13em; }
-    h3 { margin: 8px 0; font-size: 1.22rem; letter-spacing: -.04em; }
-    .project-body p { color: var(--muted); font-size: .9rem; margin: 0 0 18px; }
-    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
-    .tag { border: 1px solid var(--line); color: #c9cfdb; border-radius: 5px; padding: 4px 8px; font: .68rem "DM Mono", monospace; }
-    .text-link { color: var(--text); font-size: .83rem; font-weight: 800; }
-    .text-link span { color: var(--accent); margin-left: 5px; }
-    .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .skill-card { padding: 22px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; }
-    .skill-icon { color: var(--accent); font-size: 1.3rem; }
-    .skill-card h3 { font-size: 1rem; margin-top: 12px; }
-    .skill-card p { margin: 0; color: var(--muted); font-size: .85rem; }
-    .timeline { border-left: 1px solid rgba(168,240,106,.5); margin-left: 8px; padding-left: 26px; display: grid; gap: 28px; }
-    .timeline-item { position: relative; }
-    .timeline-item::before { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); left: -31px; top: 8px; box-shadow: 0 0 0 5px rgba(168,240,106,.1); }
-    .timeline-date { font-size: .72rem; color: var(--accent); }
-    .timeline-item h3 { margin: 5px 0; }
-    .timeline-item p { color: var(--muted); font-size: .9rem; margin: 0; }
-    .contact-panel { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(130deg, #171d24, #10131a); padding: clamp(26px, 5vw, 54px); display: flex; align-items: center; justify-content: space-between; gap: 30px; }
-    .contact-panel h2 { max-width: 600px; }
-    .contact-panel p { color: var(--muted); max-width: 500px; }
-    footer { padding: 25px 0 36px; color: var(--muted); font-size: .78rem; }
-    .footer-inner { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
-    .socials { display: flex; gap: 18px; }
-    .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
-    @media (max-width: 760px) {
-      .wrap { width: min(var(--max), calc(100% - 30px)); }
-      .nav { min-height: 64px; }
-      .navlinks { gap: 13px; font-size: .77rem; }
-      .navlinks a:not(.nav-cta) { display: none; }
-      .hero { padding: 76px 0 58px; }
-      .hero-meta { gap: 12px 18px; margin-top: 36px; }
-      section { padding: 58px 0; }
-      .section-head { align-items: start; flex-direction: column; }
-      .about-grid, .projects { grid-template-columns: 1fr; }
-      .skills-grid { grid-template-columns: 1fr; }
-      .project-visual { height: 170px; }
-      .contact-panel { align-items: start; flex-direction: column; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Santiago Alvarez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one left-aligned column of plain type sitting directly on a living circuit board.
+   No cards: the board shows through everything. One authored moment: the page takes your pulse. */
+:root{
+  --ground:#f1e9d6; --ink:#15284a; --muted:#3f4a63; --hair:rgba(21,40,74,.2);
+  --accent:#17408a; --pulse:#97290f; --signal:#f2b63c;
+  --sea1:#1b3058; --sea1b:#2a4675; --sea2:#5d8fb8; --sea2b:#497aa5; --sea3:#a9c7dc; --sea3b:#c3d9e8; --foam:#fff9ec;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --hand:"Caveat","Bradley Hand",cursive;
+  --ease-out:cubic-bezier(.23,1,.32,1); --ease-in-out:cubic-bezier(.77,0,.175,1);
+  /* To put your own picture behind everything: set --photo to url("data:image/jpeg;base64,...") */
+  --photo:none; --photo-strength:.18;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-color:var(--muted) transparent;scrollbar-width:thin}
+body{margin:0;background:var(--ground) linear-gradient(180deg,#f3ecda 0%,#ebe3cf 34%,#dbd3c0 58%,#cec6b5 80%,#c8c1b1 100%) fixed;color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;caret-color:var(--pulse);-webkit-font-smoothing:antialiased}
+::selection{background:var(--pulse);color:var(--ground)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+a{color:inherit}
+.photo-bg{position:fixed;inset:0;z-index:0;background-image:var(--photo);background-size:cover;background-position:center;opacity:var(--photo-strength);pointer-events:none}
+.art{position:fixed;right:0;bottom:0;height:80%;aspect-ratio:1073/1356;max-width:100%;z-index:0;pointer-events:none;transition:opacity 500ms var(--ease-out)}
+.art img,#board{position:absolute;inset:0;width:100%;height:100%;display:block}
+.art img[hidden]{display:none}
+#haze{position:absolute;left:0;top:0;height:100%}
+#extL,#extL-fx{position:absolute;right:calc(100% - 1px);top:0;height:100%;display:none}
+#extR,#extR-fx{position:absolute;left:calc(100% - 1px);top:0;height:100%;display:none}
+@media (min-aspect-ratio:1/1){.art{right:16vw}}
+body:not([data-view="home"]) .art{opacity:.14}
+@media (max-aspect-ratio:1/1){.art{height:auto;width:100%;-webkit-mask-image:linear-gradient(180deg,transparent,#000 22%);mask-image:linear-gradient(180deg,transparent,#000 22%)}}
+.page{position:relative;z-index:1;max-width:1120px;min-height:100%;margin:0 auto;padding:0 clamp(18px,5vw,48px) 40px;display:flex;flex-direction:column;gap:clamp(20px,4vh,40px)}
+html,body{height:100%}
+main{flex:1}
+.view{display:flex;flex-direction:column;gap:clamp(48px,8vw,88px);animation:rise 420ms var(--ease-out) both}
+.view[hidden]{display:none}
+body[data-view="home"] footer{display:none}
+
+/* nav */
+.nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 26px;padding-top:16px;font-size:16px}
+.nav a[aria-current="page"]{color:var(--ink)}
+.nav a[aria-current="page"]::after{transform:scaleX(1)}
+.nav a{position:relative;display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:var(--muted);transition:color 160ms var(--ease-out)}
+.nav a::after,.draw::after{content:"";position:absolute;left:0;right:0;bottom:9px;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform 220ms var(--ease-out)}
+.nav a:active{transform:scale(.97)}
+
+/* hero */
+.view.hero{gap:0;padding-top:clamp(8px,4vh,48px)}
+h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(46px,min(11vw,13vh),104px);line-height:.88;letter-spacing:-.04em;text-wrap:balance}
+h1 span{display:inline-block;animation:rise 700ms var(--ease-out) both}
+h1 span:nth-child(2){animation-delay:70ms}
+.lede{margin:18px 0 0;max-width:22ch;font-size:clamp(20px,2.4vw,26px);line-height:1.3;font-weight:500;animation:rise 700ms var(--ease-out) 140ms both}
+.lede em{font-style:normal;color:var(--pulse)}
+.where{margin:10px 0 0;color:var(--muted);font-weight:500;max-width:30ch;animation:rise 700ms var(--ease-out) 200ms both}
+.links{display:flex;flex-wrap:wrap;gap:4px 22px;margin-top:10px}
+.hero .links{animation:rise 700ms var(--ease-out) 260ms both}
+.draw{position:relative;display:inline-flex;align-items:center;min-height:44px;text-decoration:none;font-weight:600;color:var(--accent)}
+.draw::after{transform:scaleX(1);transform-origin:right;opacity:.45}
+.draw:active{transform:scale(.97)}
+.todo{color:var(--muted);font-weight:500}
+.ico{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin-left:-9px;color:var(--ink);font-weight:600;text-decoration:none;transition:transform 160ms var(--ease-out)}
+.ico img{width:26px;height:26px;display:block}
+.ico:active{transform:scale(.94)}
+.links:has(.ico){gap:4px 14px;align-items:center;padding-left:9px}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+.me{position:relative;width:clamp(150px,20vw,210px)}
+.about{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px 56px;align-items:start}
+.formal{margin:0 0 14px;max-width:60ch;font-size:18px}
+.yap{margin:0;max-width:44ch;font-family:var(--display);font-weight:500;font-size:clamp(22px,3vw,32px);line-height:1.2;letter-spacing:-.01em}
+.yap b{color:var(--pulse);font-weight:700}
+.shelf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}
+.shelf li{aspect-ratio:1;border:1.5px dashed var(--muted);border-radius:6px;display:grid;place-items:center;text-align:center;padding:16px;color:var(--muted);font-size:15px;transition:transform 260ms var(--ease-out)}
+.shelf li:nth-child(3n+1){transform:rotate(-1.2deg)}.shelf li:nth-child(3n){transform:rotate(1deg)}
+.frame{aspect-ratio:4/5;border:1.5px dashed var(--muted);border-radius:6px;display:grid;place-items:center;text-align:center;padding:14px;color:var(--muted);font-size:14px;transform:rotate(2.5deg);transition:transform 300ms var(--ease-out)}
+.note{display:block;margin:14px 0 0 34%;font-family:var(--hand);font-size:26px;line-height:1;color:var(--pulse);transform:rotate(-5deg);white-space:nowrap}
+
+/* pulse */
+.pulse{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 18px;align-items:center;margin-top:22px;max-width:440px;animation:rise 700ms var(--ease-out) 320ms both}
+.pulse-t{margin:0;color:var(--muted);font-size:15px;line-height:1.4}
+.beat{width:68px;height:68px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:500 14px var(--mono);cursor:pointer;display:grid;place-items:center;position:relative;transition:transform 160ms var(--ease-out);touch-action:manipulation}
+.beat::before{content:"";position:absolute;inset:16px;border-radius:50%;background:var(--pulse);transform:scale(.55);transition:transform 420ms var(--ease-out)}
+.beat.hit::before{transform:scale(1);transition-duration:60ms}
+.beat span{position:relative;color:var(--ground);font-weight:500;opacity:0;transition:opacity 200ms ease}
+.beat.live span{opacity:1}
+.beat:active{transform:scale(.95)}
+.pulse h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(26px,3.6vw,40px);line-height:1.05;letter-spacing:-.02em;text-wrap:balance}
+.pulse p{margin:8px 0 0;color:var(--muted);max-width:56ch}
+.readout{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:6px;font:500 15px var(--mono);font-variant-numeric:tabular-nums}
+#ppg{width:180px;height:36px;max-width:100%}
+
+/* sections */
+h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp(30px,4.6vw,52px);letter-spacing:-.03em;line-height:1}
+.sub{margin:0 0 22px;color:var(--muted);max-width:60ch}
+.proj{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
+.proj li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:6px 36px;padding:22px 0;border-bottom:1px solid var(--hair);position:relative;transition:opacity 200ms ease}
+.proj li::before{content:"";position:absolute;left:-14px;top:30px;width:7px;height:7px;border-radius:50%;background:var(--pulse);transform:scale(0);transition:transform 220ms var(--ease-out)}
+.proj h3{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;line-height:1.1;transition:transform 220ms var(--ease-out)}
+.proj .at{margin:4px 0 0;color:var(--muted);font-size:15px}
+.proj p{margin:0}
+.proj .mine{margin-top:8px;color:var(--muted)}
+.proj .mine b{color:var(--ink);font-weight:600}
+.proj a{color:var(--accent);font-weight:600;text-underline-offset:4px}
+.proj.dim li:not(.on){opacity:.38}
+.proj li.on::before{transform:scale(1)}
+.proj li.on h3{transform:translateX(6px)}
+
+/* parts bin */
+.bin{display:flex;flex-wrap:wrap;gap:16px 14px;padding:0;margin:0;list-style:none}
+.part{position:relative;font:500 14px var(--mono);padding:11px 16px;min-height:44px;display:inline-flex;align-items:center;border:1.5px solid var(--ink);border-radius:4px;background:transparent;color:var(--ink);cursor:grab;user-select:none;touch-action:none;transition:transform 420ms var(--ease-out),background 160ms ease,color 160ms ease,opacity 200ms ease;will-change:transform}
+.part::before,.part::after{content:"";position:absolute;left:10px;right:10px;height:6px;background:repeating-linear-gradient(90deg,var(--ink) 0 3px,transparent 3px 11px)}
+.part::before{top:-7px}.part::after{bottom:-7px}
+.part.soft{border-radius:22px;border-style:dashed}
+.part.soft::before,.part.soft::after{display:none}
+.part.drag{cursor:grabbing;transition:background 160ms ease,color 160ms ease;z-index:3}
+.part.on{background:var(--ink);color:var(--ground)}
+.bin.dim .part:not(.on){opacity:.35}
+.hint{font-family:var(--hand);font-size:24px;color:var(--pulse);margin:18px 0 0;transform:rotate(-1.5deg);display:inline-block}
+
+/* trail */
+.trail{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--hair)}
+.trail li{display:grid;grid-template-columns:minmax(92px,150px) minmax(0,1fr);gap:4px 24px;padding:14px 0;border-bottom:1px solid var(--hair)}
+.trail time{font:400 14px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;padding-top:3px}
+.trail b{font-weight:600}
+.trail span{color:var(--muted)}
+
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;color:var(--muted);font-size:15px}
+
+@media (hover:hover) and (pointer:fine){
+  .nav a:hover{color:var(--ink)} .nav a:hover::after{transform:scaleX(1)}
+  .draw:hover::after{opacity:1;animation:redraw 420ms var(--ease-out)}
+  .frame:hover{transform:rotate(0deg) scale(1.02)}
+  .ico:hover{transform:translateY(-2px)}
+  .shelf li:hover{transform:translateY(-3px) rotate(0deg)}
+  .part:hover:not(.drag){transform:translateY(-2px)}
+  .beat:hover{transform:scale(1.03)}
+}
+@keyframes redraw{0%{transform:scaleX(1);transform-origin:right}49%{transform:scaleX(0);transform-origin:right}50%{transform:scaleX(0);transform-origin:left}100%{transform:scaleX(1);transform-origin:left}}
+@media (max-width:720px){
+  .about{grid-template-columns:1fr}
+  .nav{justify-content:flex-start}
+  .proj li{grid-template-columns:1fr}
+  .proj li::before{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;transition-duration:1ms !important}
+  html{scroll-behavior:auto}
+}
+</style>
 </head>
-<body>
-  <!--
-    QUICK CUSTOMISATION:
-    1) Replace "Santiago Alvarez" if you want a different display name.
-    2) Replace YOUR_GITHUB, YOUR_LINKEDIN and YOUR_EMAIL below.
-    3) Replace the example project links with your real repositories.
-    4) To add your CV, upload a PDF named "cv.pdf" to this same repository.
-  -->
-  <header class="topbar">
-    <nav class="nav wrap" aria-label="Main navigation">
-      <a class="brand" href="#home">SA<span>.</span></a>
-      <div class="navlinks">
-        <a href="#about">About</a>
-        <a href="#projects">Projects</a>
-        <a href="#skills">Skills</a>
-        <a href="#experience">Experience</a>
-        <a class="nav-cta" href="#contact">Get in touch ↗</a>
-      </div>
+<body data-view="home">
+<div class="photo-bg" aria-hidden="true"></div>
+<div class="art" id="art" aria-hidden="true"><img id="haze-src" src="haze.png" alt="" hidden><canvas id="haze"></canvas><canvas id="extL"></canvas><canvas id="extL-fx"></canvas><canvas id="extR"></canvas><canvas id="extR-fx"></canvas><img id="wave" src="wave3.png" alt=""><canvas id="board"></canvas></div>
+
+<div class="page">
+  <header>
+    <nav class="nav" aria-label="Sections">
+      <a href="#home" data-nav="home">home</a>
+      <a href="#projects" data-nav="projects">projects</a>
+      <a href="#about" data-nav="about">about</a>
+      <a href="#ayrton" data-nav="ayrton">ayrton</a>
     </nav>
   </header>
 
   <main>
-    <section class="hero" id="home" style="border-top:0">
-      <div class="wrap">
-        <div class="eyebrow mono">Electrical & Electronic Engineering · Nottingham, UK</div>
-        <h1>Building things<br>that <span class="stroke">think.</span></h1>
-        <p class="hero-copy">I'm Santiago Alvarez, an Electrical and Electronic Engineering student at the University of Nottingham interested in embedded systems, robotics, control engineering, and AI.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#projects">Explore my work <span>↘</span></a>
-          <a class="btn btn-secondary" href="cv.pdf" target="_blank" rel="noopener">View CV <span>↗</span></a>
-        </div>
-        <div class="hero-meta mono">
-          <span>Electrical engineering</span>
-          <span>Embedded systems</span>
-          <span>AI & intelligent systems</span>
+  <section class="view hero" id="view-home" data-view="home">
+    <h1><span>santiago</span> <span>alvarez</span></h1>
+    <p class="lede">i wire things up, then teach them to <em>think</em>.</p>
+    <p class="where">electrical &amp; electronic engineering student / ai builder</p>
+    <div class="links">
+      <a class="ico" href="https://github.com/santiagoalvarezv" rel="me noopener" aria-label="GitHub" title="GitHub"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/github.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('github'))"></a>
+      <a class="ico" href="https://www.linkedin.com/in/santiago-alvarezv/" rel="me noopener" aria-label="LinkedIn" title="LinkedIn"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/linkedin.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('linkedin'))"></a>
+      <a class="ico" href="https://devpost.com/" rel="me noopener" aria-label="Devpost" title="Devpost"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/devpost.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('devpost'))"></a>
+      <a class="ico" href="mailto:eeysa23@nottingham.ac.uk" aria-label="Email eeysa23@nottingham.ac.uk" title="eeysa23@nottingham.ac.uk"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3.5 7l8.5 6.5L20.5 7"></path></svg></a>
+    </div>
+  </section>
+
+  <section class="view" id="view-projects" data-view="projects" hidden>
+    <div>
+      <h2 class="sec">things i've built</h2>
+      <p class="sub">mostly with a team, usually against a clock. point at one to see which parts went into it.</p>
+      <ul class="proj" id="proj">
+        <li data-parts="esp32 max30102 ttp223 gps kicad">
+          <div><h3>panic! at the wrist</h3><p class="at">hackathon build</p></div>
+          <div><p>a bracelet that notices a driver drifting off and calls for help with a double tap.</p>
+          <p class="mine"><b>my part:</b> all the electronics, from sensors to circuit. <b>what broke:</b> solder joints, repeatedly, and one sensor that died on day two.</p></div>
+        </li>
+        <li data-parts="python pytorch pca">
+          <div><h3>anomaly vision</h3><p class="at">imperial college london, summer programme</p></div>
+          <div><p>finding defects in bottles, hazelnuts, metal nuts, transistors and wood with three different methods. named a top 3 final project.</p>
+          <p class="mine"><b>what i learned:</b> comparing pixel by pixel falls apart the moment a part is rotated. <a href="https://github.com/santiagoalvarezv/Unsupervised-Learning-Dataset-Option-A-Visual-Inspection-at-Imperial-College-London">read the code</a></p></div>
+        </li>
+        <li data-parts="stm32 cpld oled">
+          <div><h3>pulse oximeter</h3><p class="at">university of nottingham, in progress</p></div>
+          <div><p>a group design project that measures pulse and blood oxygen.</p>
+          <p class="mine"><b>my part:</b> the control logic and the display.</p></div>
+        </li>
+        <li data-parts="python argon">
+          <div><h3>roboteacher</h3><p class="at">agentverse at ucl, robotics track</p></div>
+          <div><p>a robot that teaches with no internet connection, the model running on the machine itself.</p>
+          <p class="mine"><b>my part:</b> the ai teacher.</p></div>
+        </li>
+        <li data-parts="gemini elevenlabs snowflake">
+          <div><h3>roadwork ai</h3><p class="at">oxhack</p></div>
+          <div><p>pick a road and it tells you the least disruptive moment to dig it up. it comes with a voice assistant called aura.</p>
+          <p class="mine"><b>how it changed:</b> it started as an idea to ease traffic in lima.</p></div>
+        </li>
+        <li data-parts="python forecasting">
+          <div><h3>reactor forecasting</h3><p class="at">supervised learning summer school</p></div>
+          <div><p>predicting how a simulated chemical reactor behaves over time by averaging three models.</p>
+          <p class="mine"><b>my part:</b> the averaging, and the conclusions.</p></div>
+        </li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="sec">parts bin</h2>
+      <p class="sub">what's on my bench. chips with legs are hardware, the rest is software. point at a part to see where it ended up.</p>
+      <ul class="bin" id="bin">
+        <li class="part" data-part="esp32">ESP32-S3</li>
+        <li class="part" data-part="stm32">STM32</li>
+        <li class="part" data-part="cpld">CPLD</li>
+        <li class="part" data-part="max30102">MAX30102</li>
+        <li class="part" data-part="ttp223">TTP223</li>
+        <li class="part" data-part="gps">NEO-6M GPS</li>
+        <li class="part" data-part="oled">OLED</li>
+        <li class="part soft" data-part="kicad">KiCad</li>
+        <li class="part soft" data-part="python">Python</li>
+        <li class="part soft" data-part="pytorch">PyTorch</li>
+        <li class="part soft" data-part="pca">PCA</li>
+        <li class="part soft" data-part="forecasting">gradient boosting</li>
+        <li class="part soft" data-part="argon">Argon</li>
+        <li class="part soft" data-part="gemini">Gemini API</li>
+        <li class="part soft" data-part="elevenlabs">ElevenLabs</li>
+        <li class="part soft" data-part="snowflake">Snowflake</li>
+      </ul>
+      <p class="hint">go on, pick one up. they snap back.</p>
+    </div>
+  </section>
+
+  <section class="view" id="view-about" data-view="about" hidden>
+    <div class="about">
+      <div>
+        <h2 class="sec">about</h2>
+        <p class="formal">I am an Electrical and Electronic Engineering student at the University of Nottingham (BEng, 2025 to 2028), based in London.</p>
+        <p class="formal">My work sits where hardware meets machine learning: I design and build the electronics, then write the models that make sense of what they measure. I have done this in university projects, at a summer programme at Imperial College London, and in hackathon teams.</p>
+        <p class="formal">My goal is a master's degree in artificial intelligence.</p>
+        <div class="links">
+          <a class="ico" href="https://github.com/santiagoalvarezv" rel="me noopener" aria-label="GitHub" title="GitHub"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/github.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('github'))"></a>
+          <a class="ico" href="https://www.linkedin.com/in/santiago-alvarezv/" rel="me noopener" aria-label="LinkedIn" title="LinkedIn"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/linkedin.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('linkedin'))"></a>
+          <a class="ico" href="https://devpost.com/" rel="me noopener" aria-label="Devpost" title="Devpost"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/devpost.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('devpost'))"></a>
+          <a class="ico" href="mailto:eeysa23@nottingham.ac.uk" aria-label="Email eeysa23@nottingham.ac.uk" title="eeysa23@nottingham.ac.uk"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3.5 7l8.5 6.5L20.5 7"></path></svg></a>
+          <span class="draw todo">[add your cv]</span>
         </div>
       </div>
-    </section>
-
-    <section id="about">
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="section-index mono">01 / ABOUT</div><h2>Curious by design.</h2></div>
-          <p class="section-intro">Engineering sits at the intersection of physical systems, software, and creative problem-solving.</p>
-        </div>
-        <div class="about-grid reveal">
-          <div class="about-copy">
-            <p>I'm studying <strong>Electrical and Electronic Engineering at the University of Nottingham</strong>. I enjoy understanding how systems work from the hardware up — then using software to make them smarter, more reliable, and more useful.</p>
-            <p>My current interests include <strong>embedded programming, electronics, robotics, control systems, and machine learning</strong>. I’m keen to keep building practical projects, learning from teams, and documenting the engineering process properly.</p>
-            <p class="mono" style="font-size:.77rem;color:var(--accent)">CURRENTLY LEARNING → BUILDING → TESTING → ITERATING</p>
-          </div>
-          <div class="stat-grid">
-            <div class="stat"><b>EEE</b><span>University of Nottingham</span></div>
-            <div class="stat"><b>C / C++</b><span>Programming foundations</span></div>
-            <div class="stat"><b>Hardware</b><span>Microcontrollers & sensors</span></div>
-            <div class="stat"><b>AI / ML</b><span>Growing area of focus</span></div>
-          </div>
-        </div>
+      <div class="me">
+        <div class="frame">[your photo goes here]</div>
+        <span class="note">&#8598; that's me</span>
       </div>
-    </section>
+    </div>
+    <div>
+      <h2 class="sec">trail</h2>
+      <p class="sub">education and where i've been lately.</p>
+      <ol class="trail">
+        <li><time>2025 to 2028</time><div><b>university of nottingham</b> <span>beng electrical and electronic engineering</span></div></li>
+        <li><time>nov 2026</time><div><b>agentverse</b> <span>ucl ai society hackathon, london</span></div></li>
+        <li><time>2026</time><div><b>oxhack</b> <span>built roadwork ai in about 25 hours</span></div></li>
+        <li><time>summer 2026</time><div><b>imperial college london</b> <span>three week programme in ai and autonomous industrial systems</span></div></li>
+        <li><time>jun 2026</time><div><b>vivatech</b> <span>paris</span></div></li>
+      </ol>
+    </div>
+  </section>
 
-    <section id="projects">
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="section-index mono">02 / SELECTED WORK</div><h2>Projects in progress.</h2></div>
-          <p class="section-intro">A growing collection of practical engineering work. Replace these sample descriptions and links with your actual results as you publish them.</p>
-        </div>
-        <div class="projects">
-          <article class="project reveal">
-            <div class="project-visual">
-              <span class="project-no mono">PROJECT 001</span>
-              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract circuit board illustration">
-                <defs><pattern id="grid1" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#2a3440" stroke-width="1"/></pattern></defs>
-                <rect width="600" height="300" fill="#121a22"/><rect width="600" height="300" fill="url(#grid1)"/>
-                <g stroke="#a8f06a" stroke-width="3" fill="none" opacity=".8"><path d="M50 230H170V170H230V90H285"/><path d="M360 70H420V130H520V220H440"/><path d="M80 60H150V105H200"/><path d="M285 90V145H350V210H400"/></g>
-                <g fill="#a8f06a"><circle cx="50" cy="230" r="5"/><circle cx="285" cy="90" r="5"/><circle cx="360" cy="70" r="5"/><circle cx="440" cy="220" r="5"/><circle cx="80" cy="60" r="5"/></g>
-                <rect x="230" y="120" width="130" height="80" rx="7" fill="#202b35" stroke="#75d5c4" stroke-width="2"/>
-                <g stroke="#75d5c4" stroke-width="3"><path d="M220 135h10m-10 15h10m-10 15h10m-10 15h10m130-45h10m-10 15h10m-10 15h10m-10 15h10"/></g>
-                <text x="295" y="153" text-anchor="middle" fill="#f2f4f8" font-size="14" font-family="monospace">ESP32</text><text x="295" y="175" text-anchor="middle" fill="#a8f06a" font-size="11" font-family="monospace">CONTROL</text>
-              </svg>
-            </div>
-            <div class="project-body">
-              <div class="project-type mono">Embedded systems · Robotics</div>
-              <h3>ESP32 Robotics & Sensor Integration</h3>
-              <p>Microcontroller-based robotics exploring sensor input, motor control, and real-time behaviour. Add your wiring diagrams, code, test results, and lessons learned here.</p>
-              <div class="tags"><span class="tag">ESP32</span><span class="tag">C/C++</span><span class="tag">Sensors</span><span class="tag">Control</span></div>
-              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">View project <span>↗</span></a>
-            </div>
-          </article>
-
-          <article class="project reveal">
-            <div class="project-visual">
-              <span class="project-no mono">PROJECT 002</span>
-              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract motorsport telemetry illustration">
-                <rect width="600" height="300" fill="#15151d"/>
-                <g stroke="#343b4c" stroke-width="1"><path d="M0 50H600M0 100H600M0 150H600M0 200H600M0 250H600"/><path d="M60 0V300M120 0V300M180 0V300M240 0V300M300 0V300M360 0V300M420 0V300M480 0V300M540 0V300"/></g>
-                <path d="M20 210 C90 205 105 120 170 155 S270 230 330 135 S425 85 470 120 S535 155 580 55" stroke="#a8f06a" stroke-width="4" fill="none"/>
-                <path d="M20 240 C100 245 130 185 190 200 S285 145 340 180 S445 220 500 175 S555 190 580 160" stroke="#75d5c4" stroke-width="3" fill="none" stroke-dasharray="7 7"/>
-                <g fill="#a8f06a"><circle cx="170" cy="155" r="5"/><circle cx="330" cy="135" r="5"/><circle cx="470" cy="120" r="5"/></g>
-                <text x="28" y="30" fill="#a1a8b8" font-size="12" font-family="monospace">TELEMETRY / SIGNAL</text>
-              </svg>
-            </div>
-            <div class="project-body">
-              <div class="project-type mono">Motorsport · Electronics</div>
-              <h3>Formula Student — LV Electronics</h3>
-              <p>Document your low-voltage box responsibilities, design decisions, integration, verification, and teamwork as the project develops. Only include work you have actually completed.</p>
-              <div class="tags"><span class="tag">Electronics</span><span class="tag">Systems</span><span class="tag">Testing</span><span class="tag">Teamwork</span></div>
-              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">Project notes <span>↗</span></a>
-            </div>
-          </article>
-
-          <article class="project reveal">
-            <div class="project-visual">
-              <span class="project-no mono">PROJECT 003</span>
-              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract control systems graph">
-                <rect width="600" height="300" fill="#121a22"/>
-                <g stroke="#2b3542" stroke-width="1"><path d="M60 35V250H555"/><path d="M60 80H555M60 125H555M60 170H555M60 215H555" stroke-dasharray="3 6"/><path d="M150 35V250M240 35V250M330 35V250M420 35V250M510 35V250" stroke-dasharray="3 6"/></g>
-                <path d="M60 230 C95 230 110 210 140 120 S200 70 235 125 S300 190 345 150 S410 105 455 125 S515 145 555 110" fill="none" stroke="#a8f06a" stroke-width="4"/>
-                <path d="M60 230 L555 230" stroke="#75d5c4" stroke-width="2" stroke-dasharray="5 6"/>
-                <text x="75" y="55" fill="#a1a8b8" font-size="12" font-family="monospace">SYSTEM RESPONSE</text>
-              </svg>
-            </div>
-            <div class="project-body">
-              <div class="project-type mono">Control engineering</div>
-              <h3>Control Systems & Data Analysis</h3>
-              <p>Use this space for a documented control, signal-processing, or measurement project: explain the model, approach, experiments, and what the data showed.</p>
-              <div class="tags"><span class="tag">Modelling</span><span class="tag">Signals</span><span class="tag">Python</span></div>
-              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">View project <span>↗</span></a>
-            </div>
-          </article>
-
-          <article class="project reveal">
-            <div class="project-visual">
-              <span class="project-no mono">PROJECT 004</span>
-              <svg viewBox="0 0 600 300" role="img" aria-label="Abstract machine learning data visualization">
-                <rect width="600" height="300" fill="#15151d"/>
-                <g stroke="#2b3542" stroke-width="1"><path d="M45 45H555M45 95H555M45 145H555M45 195H555M45 245H555"/><path d="M95 25V265M195 25V265M295 25V265M395 25V265M495 25V265"/></g>
-                <g fill="#75d5c4" opacity=".9"><circle cx="105" cy="205" r="7"/><circle cx="135" cy="175" r="6"/><circle cx="165" cy="220" r="5"/><circle cx="190" cy="150" r="7"/><circle cx="215" cy="185" r="5"/><circle cx="240" cy="125" r="7"/></g>
-                <g fill="#a8f06a" opacity=".95"><circle cx="330" cy="95" r="7"/><circle cx="360" cy="130" r="6"/><circle cx="390" cy="75" r="7"/><circle cx="415" cy="110" r="5"/><circle cx="445" cy="65" r="6"/><circle cx="480" cy="95" r="7"/></g>
-                <path d="M75 240L260 100M260 100L500 45" stroke="#f2f4f8" stroke-width="2" stroke-dasharray="5 6" opacity=".5"/>
-                <text x="28" y="25" fill="#a1a8b8" font-size="12" font-family="monospace">DATA / LEARNING</text>
-              </svg>
-            </div>
-            <div class="project-body">
-              <div class="project-type mono">AI · Machine learning</div>
-              <h3>AI & Intelligent Systems</h3>
-              <p>A future home for machine-learning experiments and engineering applications. Add this section when you have a real project, dataset, evaluation, and results to share.</p>
-              <div class="tags"><span class="tag">Python</span><span class="tag">Machine learning</span><span class="tag">Data</span></div>
-              <a class="text-link" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">View GitHub <span>↗</span></a>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="skills">
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="section-index mono">03 / TOOLKIT</div><h2>Skills I'm building.</h2></div>
-          <p class="section-intro">Keep this honest and update it as you gain experience. Be ready to explain every skill listed in an interview.</p>
-        </div>
-        <div class="skills-grid">
-          <article class="skill-card reveal"><div class="skill-icon">⌘</div><h3>Programming</h3><p>C, C++, Python fundamentals, debugging, algorithms, and version control.</p></article>
-          <article class="skill-card reveal"><div class="skill-icon">⌁</div><h3>Electronics & Embedded</h3><p>Microcontrollers, sensors, circuit fundamentals, GPIO, and hardware/software integration.</p></article>
-          <article class="skill-card reveal"><div class="skill-icon">⌖</div><h3>Systems & Control</h3><p>Measurement, feedback concepts, testing, data analysis, and systematic troubleshooting.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section id="experience">
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="section-index mono">04 / EXPERIENCE</div><h2>Learning by doing.</h2></div>
-          <p class="section-intro">A simple timeline for your education, student teams, and relevant experience.</p>
-        </div>
-        <div class="timeline reveal">
-          <div class="timeline-item">
-            <div class="timeline-date mono">2026 — PRESENT</div>
-            <h3>BEng Electrical & Electronic Engineering</h3>
-            <p>University of Nottingham · Building foundations in electronics, power and energy, systems, mathematics, and programming.</p>
-          </div>
-          <div class="timeline-item">
-            <div class="timeline-date mono">2026 — PRESENT</div>
-            <h3>Student Engineering Projects</h3>
-            <p>Formula Student and engineering team projects. Add your official team title, responsibilities, and measurable contributions as they develop.</p>
-          </div>
-          <div class="timeline-item">
-            <div class="timeline-date mono">ONGOING</div>
-            <h3>Independent Learning</h3>
-            <p>Developing practical programming and embedded systems skills through hands-on builds, experiments, and technical documentation.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="contact">
-      <div class="wrap">
-        <div class="contact-panel reveal">
-          <div>
-            <div class="section-index mono">05 / CONTACT</div>
-            <h2>Have a project in mind?</h2>
-            <p>I'm interested in engineering projects, internships, and opportunities to learn from people building useful technology. Feel free to reach out.</p>
-            <div class="hero-actions">
-              <a class="btn btn-primary" href="mailto:YOUR_EMAIL">Email me ↗</a>
-              <a class="btn btn-secondary" href="https://www.linkedin.com/in/YOUR_LINKEDIN" target="_blank" rel="noopener">LinkedIn ↗</a>
-              <a class="btn btn-secondary" href="https://github.com/YOUR_GITHUB" target="_blank" rel="noopener">GitHub ↗</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+  <section class="view" id="view-ayrton" data-view="ayrton" hidden>
+    <div>
+      <h2 class="sec">the rest of me</h2>
+      <p class="sub">not the cv. the things i love and the things that show who i am.</p>
+      <p class="yap">i can't shut up about <b>semiconductors</b>, <b>robotics</b> and <b>quantum computing</b>. i'll cross a border for a good tech fair, and i keep signing up for hackathons that don't let me sleep.</p>
+    </div>
+    <div>
+      <ul class="shelf">
+        <li>[a song you play on repeat]</li>
+        <li>[a film you'd rewatch tomorrow]</li>
+        <li>[a photo of you building something]</li>
+        <li>[a place that feels like home]</li>
+        <li>[a book that changed your mind]</li>
+        <li>[a team, a sport or a hobby]</li>
+        <li>[someone you look up to]</li>
+        <li>[the thing nobody expects about you]</li>
+      </ul>
+      <p class="hint">these are waiting for you, santiago. send me yours.</p>
+    </div>
+  </section>
   </main>
 
   <footer>
-    <div class="wrap footer-inner">
-      <span>© <span id="year"></span> Santiago Alvarez. Built with care.</span>
-      <span class="mono">DESIGNED TO KEEP ITERATING ↗</span>
-    </div>
+    <span>want to build something? <a class="draw" href="mailto:eeysa23@nottingham.ac.uk">eeysa23@nottingham.ac.uk</a></span>
+    <span>made by hand in london.</span>
   </footer>
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-    const items = document.querySelectorAll(".reveal");
-    if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12 });
-      items.forEach((item) => observer.observe(item));
-    } else {
-      items.forEach((item) => item.classList.add("visible"));
+</div>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var css = function(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+
+  /* ---------- the wave: Santiago's own illustration, with current running along its traces ---------- */
+  var art = document.getElementById('art'), img = document.getElementById('wave'), cv = document.getElementById('board'), cx = cv.getContext('2d');
+  var palette = [], MW = 0, MH = 0, K = 2, mask = null, spots = [], walkers = [], leds = [], gold = css('--signal');
+  var DIRS = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+  function on(x, y){ return x >= 0 && y >= 0 && x < MW && y < MH && mask[y * MW + x]; }
+  function read(){
+    /* find the white traces in the picture: white pixels that are thin lines, not the solid foam */
+    MW = Math.round(img.naturalWidth / K); MH = Math.round(img.naturalHeight / K);
+    var t = document.createElement('canvas'); t.width = MW; t.height = MH;
+    var tx = t.getContext('2d', { willReadFrequently: true }); tx.drawImage(img, 0, 0, MW, MH);
+    var d = tx.getImageData(0, 0, MW, MH).data, white = new Uint8Array(MW * MH), x, y;
+    for (var i = 0; i < MW * MH; i++) white[i] = d[i*4+3] > 200 && d[i*4] > 232 && d[i*4+1] > 232 && d[i*4+2] > 226 ? 1 : 0;
+    var hist = {};
+    for (i = 0; i < MW * MH; i += 3){ if (d[i*4+3] < 200) continue; var hk = (d[i*4] >> 3) + ',' + (d[i*4+1] >> 3) + ',' + (d[i*4+2] >> 3), h = hist[hk] || (hist[hk] = [0, 0, 0, 0]); h[0]++; h[1] += d[i*4]; h[2] += d[i*4+1]; h[3] += d[i*4+2]; }
+    palette = Object.keys(hist).map(function(k){ return hist[k]; }).sort(function(a, b){ return b[0] - a[0]; }).slice(0, 14).map(function(h){ return [Math.round(h[1] / h[0]), Math.round(h[2] / h[0]), Math.round(h[3] / h[0])]; });
+    mask = new Uint8Array(MW * MH); spots = [];
+    for (y = 5; y < MH - 5; y++) for (x = 5; x < MW - 5; x++){
+      if (!white[y * MW + x]) continue;
+      var n = 0; for (var b = -5; b <= 5; b += 2) for (var a = -5; a <= 5; a += 2) n += white[(y + b) * MW + x + a];
+      if (n < 15){ mask[y * MW + x] = 1; spots.push(x, y); }
     }
-  </script>
+    cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+    leds = [];
+    for (var e = 0; e < 36; e++){ var s = ((Math.random() * spots.length / 2) | 0) * 2; leds.push({ x: spots[s] * K, y: spots[s+1] * K, ph: Math.random() * 6.283, sp: .6 + Math.random() * 1.6 }); }
+  }
+  function spawn(x, y){
+    if (walkers.length > 80) return;
+    if (x === undefined){ var s = ((Math.random() * spots.length / 2) | 0) * 2; x = spots[s]; y = spots[s+1]; }
+    walkers.push({ x: x, y: y, d: (Math.random() * 8) | 0, life: 50 + Math.random() * 110, tail: [] });
+  }
+  function near(x, y, r, n){
+    for (var i = 0, made = 0; i < n * 14 && made < n; i++){
+      var a = Math.round(x + (Math.random() - .5) * 2 * r), b = Math.round(y + (Math.random() - .5) * 2 * r);
+      if (on(a, b)){ spawn(a, b); made++; }
+    }
+  }
+  function step(w){
+    var turns = [0, 1, 7, 2, 6];
+    for (var i = 0; i < turns.length; i++){
+      var d = (w.d + turns[i]) % 8, nx = w.x + DIRS[d][0], ny = w.y + DIRS[d][1];
+      if (on(nx, ny)){ w.tail.push(w.x, w.y); if (w.tail.length > 18) w.tail.splice(0, 2); w.x = nx; w.y = ny; w.d = d; w.life--; return; }
+    }
+    w.life = 0;
+  }
+  function paint(now){
+    cx.clearRect(0, 0, cv.width, cv.height); cx.fillStyle = gold;
+    leds.forEach(function(l){
+      var a = Math.pow(Math.max(0, Math.sin(now / 1000 * l.sp + l.ph)), 6); if (a < .03) return;
+      cx.globalAlpha = a * .2; cx.beginPath(); cx.arc(l.x, l.y, 9, 0, 6.283); cx.fill();
+      cx.globalAlpha = a; cx.beginPath(); cx.arc(l.x, l.y, 3.6, 0, 6.283); cx.fill();
+    });
+    walkers.forEach(function(w){
+      var n = w.tail.length / 2;
+      for (var j = 0; j < n; j += 2){ cx.globalAlpha = (j + 1) / n * .8; cx.beginPath(); cx.arc(w.tail[j*2] * K, w.tail[j*2+1] * K, 1.4 + 2 * j / n, 0, 6.283); cx.fill(); }
+      cx.globalAlpha = .22; cx.beginPath(); cx.arc(w.x * K, w.y * K, 6.5, 0, 6.283); cx.fill();
+      cx.globalAlpha = .95; cx.beginPath(); cx.arc(w.x * K, w.y * K, 3.2, 0, 6.283); cx.fill();
+    });
+    cx.globalAlpha = 1;
+  }
+  /* a swell: current sweeps the picture from left to right */
+  function swell(){
+    for (var i = 0; i < 22; i++) (function(){ var s = ((Math.random() * spots.length / 2) | 0) * 2, x = spots[s], y = spots[s+1]; setTimeout(function(){ spawn(x, y); }, x / MW * 3200); })();
+  }
+  var last = 0, idle = 0, sinceSwell = 4;
+  function frame(now){
+    var dt = Math.min(.05, (now - last) / 1000 || 0); last = now;
+    if (!document.hidden && mask){
+      idle += dt; sinceSwell += dt;
+      while (idle > .17){ idle -= .17; spawn(); }
+      if (sinceSwell > 11){ sinceSwell = 0; swell(); }
+      /* unhurried: lights in the crest travel slowest of all */
+      walkers.forEach(function(w){ w.acc = (w.acc || 0) + dt * (w.y < MH * .56 ? 16 : 30); while (w.acc >= 1 && w.life > 0){ w.acc -= 1; step(w); } });
+      walkers = walkers.filter(function(w){ return w.life > 0; });
+      paint(now); extFrame(dt);
+    }
+    requestAnimationFrame(frame);
+  }
+  function toMask(e){ var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * MW, (e.clientY - r.top) / r.height * MH]; }
+  var moved = 0;
+  window.addEventListener('pointermove', function(e){
+    var now = performance.now(); if (reduce || !mask || now - moved < 110) return; moved = now;
+    var p = toMask(e); near(p[0], p[1], 14, 1);
+  }, { passive: true });
+  window.addEventListener('pointerdown', function(e){
+    if (reduce || !mask || document.body.dataset.view !== 'home' || e.target.closest('a,button')) return;
+    var p = toMask(e); near(p[0], p[1], 60, 16);
+  }, { passive: true });
+  function build(){ try { read(); buildExt(); } catch (err) { mask = null; } }
+
+  /* ---------- continuing the illustration past both edges: every band and trace that reaches an edge carries on ---------- */
+  function makeSide(left){
+    var id = left ? 'extL' : 'extR', ex = document.getElementById(id), exx = ex.getContext('2d'), eo = document.getElementById(id + '-fx'), eox = eo.getContext('2d');
+    var EW = 0, EH = 0, bends = [], traces = [], signals = [], y0 = 0;
+    var X = function(d){ return left ? EW - d : d; };
+    function Y(y, d){
+      var out = y;
+      for (var i = 0; i < bends.length; i++){ var b = bends[i], st = b[0] + .41 * (b[1] > 0 ? (y - y0) : (EH - y)); out += b[1] * Math.max(0, Math.min(b[2], d - st)); }
+      return out;
+    }
+    function via(y, d){ exx.fillStyle = '#ffffff'; exx.beginPath(); exx.arc(X(d), Y(y, d), 7, 0, 6.283); exx.fill(); exx.fillStyle = '#5f95bd'; exx.beginPath(); exx.arc(X(d), Y(y, d), 3.6, 0, 6.283); exx.fill(); }
+    function build(){
+      var r = img.getBoundingClientRect(), sc = r.width / img.naturalWidth, IW = img.naturalWidth;
+      EH = img.naturalHeight; EW = Math.ceil((left ? r.left : window.innerWidth - r.right) / sc); traces = []; signals = [];
+      if (EW < 40){ ex.style.display = eo.style.display = 'none'; return; }
+      [ex, eo].forEach(function(c){ c.style.display = 'block'; c.width = EW; c.height = EH; c.style.width = (EW * sc) + 'px'; });
+      var colX = left ? 1 : IW - 2, t = document.createElement('canvas'); t.width = 1; t.height = EH;
+      var tx = t.getContext('2d', { willReadFrequently: true }); tx.drawImage(img, colX, 0, 1, EH, 0, 0, 1, EH);
+      var px = tx.getImageData(0, 0, 1, EH).data, rows = [], y, SKY = [-900, -900, -900];
+      for (y = 0; y < EH; y++) rows.push(px[y*4+3] < 200 ? SKY : [px[y*4], px[y*4+1], px[y*4+2]]);
+      var isW = function(c){ return c[0] > 232 && c[1] > 232 && c[2] > 226; };
+      var dist = function(a, b){ return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]); };
+      var entries = [], lw = 0, run = 0;
+      for (y = 0; y <= EH; y++){
+        if (y < EH && isW(rows[y])) run++;
+        else { if (run > 0 && run <= 12 && y - run > 0 && rows[y - run - 1] !== SKY){ entries.push(y - run / 2); lw += run; for (var k = y - run; k < y; k++) rows[k] = rows[y - run - 1]; } run = 0; }
+      }
+      lw = entries.length ? Math.max(3, lw / entries.length) : 4;
+      var bands = [], cur = null;
+      for (y = 0; y < EH; y++){ if (!cur || dist(rows[y], cur.c) > 40){ cur = { y: y, c: rows[y] }; bands.push(cur); } }
+      bands.forEach(function(b, i){
+        var end = i + 1 < bands.length ? bands[i + 1].y : EH, cnt = {}, best = null;
+        for (var q = b.y; q < end; q++){ var kk = rows[q].join(','); cnt[kk] = (cnt[kk] || 0) + 1; if (!best || cnt[kk] > cnt[best]) best = kk; }
+        b.c = best.split(',').map(Number); b.h = end - b.y;
+        if (b.c[0] >= 0){ var nearest = palette.slice().sort(function(m, n){ return dist(m, b.c) - dist(n, b.c); })[0]; if (nearest) b.c = nearest; }
+      });
+      bands = bands.filter(function(b, i){ return i === 0 || b.h >= 14; });
+      bands = bands.filter(function(b, i){ return i === 0 || dist(b.c, bands[i - 1].c) > 12; });
+      while (bands.length && bands[0].c[0] < 0) bands.shift(); /* the sky is the page itself */
+      if (!bands.length) return;
+      y0 = bands[0].y;
+      bends = left ? [[120, 1, 50], [330, 1, 36], [560, -1, 24], [800, 1, 40], [1080, -1, 26], [1400, 1, 30]] : [[6, -1, 24], [380, 1, 18], [700, -1, 20], [1000, 1, 16], [1400, -1, 22]];
+      var edge = function(v){ exx.beginPath(); exx.moveTo(X(0), v); for (var d = 0; d <= EW + 3; d += 3) exx.lineTo(X(d), Y(v, d)); exx.lineTo(X(EW), EH); exx.lineTo(X(0), EH); exx.closePath(); };
+      exx.clearRect(0, 0, EW, EH);
+      bands.forEach(function(b){
+        exx.globalCompositeOperation = b.c[0] < 0 ? 'destination-out' : 'source-over';
+        exx.fillStyle = b.c[0] < 0 ? '#000' : 'rgb(' + b.c.join(',') + ')'; edge(b.y); exx.fill();
+      });
+      exx.globalCompositeOperation = 'source-over';
+      /* angular planes in the picture's own blues, so the water is not plain stripes */
+      var blues = palette.filter(function(c){ return c[2] > c[0] + 18; }), sea = bands.filter(function(b){ return b.c[2] > b.c[0] + 18; })[0];
+      if (blues.length && sea){
+        exx.save(); edge(sea.y); exx.clip();
+        for (var f = 0; f < Math.round(EW / 110); f++){
+          var fx = Math.random() * (EW - 160) - 40, fy = sea.y + 40 + Math.random() * (EH - sea.y), fw = 160 + Math.random() * 300, fh = 50 + Math.random() * 130, fc = Math.min(fw, fh) * .5;
+          exx.fillStyle = 'rgb(' + blues[(Math.random() * blues.length) | 0].join(',') + ')';
+          exx.beginPath(); exx.moveTo(fx + fc, fy); exx.lineTo(fx + fw, fy); exx.lineTo(fx + fw + fc, fy + fc); exx.lineTo(fx + fw + fc, fy + fh); exx.lineTo(fx + fc, fy + fh); exx.lineTo(fx, fy + fh - fc); exx.lineTo(fx, fy + fc); exx.closePath(); exx.fill();
+        }
+        exx.restore();
+      }
+      /* a routing grid for the added stretch: components are placed first, then traces grow around them in every
+         direction (horizontal, vertical, diagonal), never sharing a node and never crossing, as on a real board */
+      var U = 22, occ = {}, K8 = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+      var nk = function(i, j){ return i + ',' + j; };
+      var top = function(x){ return Y(y0, left ? EW - x : x); };
+      var free = function(i, j){ var x = i * U, y = j * U; return x > 14 && x < EW - 14 && y < EH - 14 && y > top(x) + 22 && !occ[nk(i, j)]; };
+      var mark = function(x0, y0b, x1, y1){ for (var i = Math.floor(x0 / U); i <= Math.ceil(x1 / U); i++) for (var j = Math.floor(y0b / U); j <= Math.ceil(y1 / U); j++) occ[nk(i, j)] = 1; };
+      var addTrace = function(pts, seam){ var acc = [0]; for (var q = 1; q < pts.length; q++) acc.push(acc[q-1] + Math.hypot(pts[q][0] - pts[q-1][0], pts[q][1] - pts[q-1][1])); traces.push({ pts: pts, acc: acc, len: acc[acc.length-1], seam: seam }); };
+      /* the picture's own lines carry on a short way from the join; where several arrive close together only some run on, the rest stop early */
+      var GAP = 34, lastY = -99, stub = 0;
+      entries.forEach(function(e){
+        var b; if (e - lastY >= GAP){ lastY = e; b = Math.min(EW, 110 + Math.random() * 170); } else b = 30 + (stub++ % 3) * 22;
+        var pts = []; for (var d = 0; d < b; d += 6) pts.push([X(d), Y(e, d)]); pts.push([X(b), Y(e, b)]);
+        pts.forEach(function(p){ mark(p[0] - 12, p[1] - 12, p[0] + 12, p[1] + 12); });
+        addTrace(pts, true);
+      });
+      mark(left ? EW - 50 : 0, 0, left ? EW : 50, EH); /* keep the join itself clear */
+      var SIZE = [[40, 40], [46, 36], [20, 20], [56, 14], [36, 34], [72, 30], [64, 64]], comps = [], tries = 0, want = Math.round(EW * (EH - y0) / 42000);
+      while (comps.length < want && tries++ < want * 40){
+        var k = (Math.random() * SIZE.length) | 0, cw = SIZE[k][0], chh = SIZE[k][1];
+        var cx0 = 30 + Math.random() * (EW - cw - 60), ct = top(cx0), cy0 = ct + 34 + Math.random() * (EH - ct - chh - 60), ok = true;
+        for (var ci = Math.floor((cx0 - 12) / U); ci <= Math.ceil((cx0 + cw + 12) / U) && ok; ci++) for (var cj = Math.floor((cy0 - 12) / U); cj <= Math.ceil((cy0 + chh + 12) / U); cj++) if (occ[nk(ci, cj)] || cj * U < top(ci * U) + 16){ ok = false; break; }
+        if (!ok) continue;
+        mark(cx0 - 12, cy0 - 12, cx0 + cw + 12, cy0 + chh + 12); comps.push({ x: cx0, y: cy0, k: k });
+      }
+      var want2 = Math.round(EW * (EH - y0) / 6200), made = 0, START = [0, 0, 4, 4, 1, 3, 5, 7, 2, 6]; tries = 0;
+      while (made < want2 && tries++ < want2 * 40){
+        var gi = (Math.random() * EW / U) | 0, gj = (Math.random() * EH / U) | 0;
+        if (!free(gi, gj)) continue;
+        var di = START[(Math.random() * START.length) | 0], gp = [[gi * U, gj * U]], marks = [nk(gi, gj)], segs = 1 + ((Math.random() * 3) | 0), alive = true, steps = 0;
+        occ[marks[0]] = 1;
+        for (var sg = 0; sg < segs && alive; sg++){
+          var dv = K8[di], n = 1 + ((Math.random() * 4) | 0), moved = false;
+          for (var q = 0; q < n; q++){
+            var ni = gi + dv[0], nj = gj + dv[1], dk = null;
+            if (dv[0] && dv[1]){ dk = 'x' + nk(Math.min(gi, ni), Math.min(gj, nj)); if (occ[dk]){ alive = false; break; } }
+            if (!free(ni, nj)){ alive = false; break; }
+            gi = ni; gj = nj; moved = true; steps++; occ[nk(gi, gj)] = 1; marks.push(nk(gi, gj)); if (dk){ occ[dk] = 1; marks.push(dk); }
+          }
+          if (moved) gp.push([gi * U, gj * U]);
+          di = (di + (Math.random() < .5 ? 1 : 7)) % 8;
+        }
+        if (steps >= 2){ addTrace(gp, false); made++; } else marks.forEach(function(m){ delete occ[m]; });
+      }
+      var dotc = function(x, y, r, c){ exx.fillStyle = c; exx.beginPath(); exx.arc(x, y, r, 0, 6.283); exx.fill(); };
+      var redraw = function(){
+        exx.strokeStyle = '#ffffff'; exx.lineWidth = lw; exx.lineJoin = 'round'; exx.lineCap = 'round';
+        traces.forEach(function(tr){
+          exx.beginPath(); tr.pts.forEach(function(p, q){ q ? exx.lineTo(p[0], p[1]) : exx.moveTo(p[0], p[1]); }); exx.stroke();
+          var ends = tr.seam ? [tr.pts[tr.pts.length - 1]] : [tr.pts[0], tr.pts[tr.pts.length - 1]];
+          ends.forEach(function(p){ dotc(p[0], p[1], 7, '#ffffff'); dotc(p[0], p[1], 3.6, '#5f95bd'); });
+        });
+        var cs = ['#ffffff', '#d9a441', '#5f95bd', '#ecd0ad'];
+        comps.forEach(function(o, m){
+          var x = o.x, y = o.y, i, j;
+          if (o.k === 0) for (i = 0; i < 4; i++) for (j = 0; j < 4; j++) dotc(x + 4 + i * 11, y + 4 + j * 11, 3.8, cs[(i * 3 + j * 5 + m) % 4]);
+          else if (o.k === 1) for (i = 0; i < 3; i++){ exx.fillStyle = '#ffffff'; exx.beginPath(); exx.roundRect(x + i * 17, y, 11, 34, 5.5); exx.fill(); dotc(x + i * 17 + 5.5, y + 8, 2.4, '#1b3058'); dotc(x + i * 17 + 5.5, y + 26, 2.4, '#1b3058'); }
+          else if (o.k === 2){ dotc(x + 10, y + 10, 10, '#ffffff'); dotc(x + 10, y + 10, 6.6, '#1b3058'); dotc(x + 10, y + 10, 3.2, '#d9a441'); }
+          else if (o.k === 3) for (i = 0; i < 6; i++) for (j = 0; j < 2; j++) dotc(x + 3 + i * 10, y + 3 + j * 9, 2.2, '#ffffff');
+          else if (o.k === 4){ exx.fillStyle = '#5f95bd'; for (i = 0; i < 9; i++) exx.fillRect(x + i * 4, y, 1.8, 34); }
+          else if (o.k === 5){ exx.fillStyle = '#5f95bd'; exx.beginPath(); exx.roundRect(x, y + 3, 70, 10, 5); exx.roundRect(x, y + 19, 70, 10, 5); exx.fill(); }
+          else { for (i = 0; i < 5; i++) for (j = 0; j < 5; j++) if ((i + j + m) % 3) dotc(x + 6 + i * 13, y + 6 + j * 13, 4.2, cs[(i * 2 + j * 3 + m) % 4]); }
+        });
+      };
+      /* the join: each run of colour on the picture's last column carries on a short way and ends in a 45 degree cut */
+      var raw = tx.getImageData(0, 0, 1, EH).data, rs = 0, col = function(q){ return raw[q*4+3] < 200 ? SKY : [raw[q*4], raw[q*4+1], raw[q*4+2]]; };
+      for (y = 1; y <= EH; y++){
+        if (y < EH && dist(col(y), col(rs)) <= 14) continue;
+        /* thin lines (hatching) carry on too, all to the same length within a group, so none is left chopped at the edge */
+        var c0 = col(rs + ((y - rs) >> 1)), h = y - rs, L = h < 7 ? 44 + (((rs / 110) | 0) * 29) % 36 : 34 + Math.random() * 70, ch = Math.min(h, 34, L);
+        /* a thin run that touches a white line is only that line's soft edge, not hatching: leave it out, or the join turns into a comb */
+        var pale = function(q){ if (q < 0 || q >= EH) return false; var c = col(q); return c[0] > 150 && c[1] > 190 && c[2] > 200; };
+        if (h < 7){ for (var pq = rs - 6; pq < y + 6; pq++) if (pale(pq)){ L = 0; break; } }
+        if (L && !isW(c0) && !(c0[0] > 205 && c0[1] > 235) && (left || rs >= y0)){
+          exx.globalCompositeOperation = c0[0] < 0 ? 'destination-out' : 'source-over'; exx.fillStyle = c0[0] < 0 ? '#000' : 'rgb(' + c0.join(',') + ')';
+          exx.beginPath(); exx.moveTo(X(-2), rs); exx.lineTo(X(L), rs); exx.lineTo(X(L - ch), rs + ch); exx.lineTo(X(L - ch), y); exx.lineTo(X(-2), y); exx.closePath(); exx.fill();
+        }
+        rs = y;
+      }
+      exx.globalCompositeOperation = 'source-over';
+      redraw();
+      /* vias the picture's edge sliced in half: two bright slivers a few pixels apart. Draw the whole via so it reads as one. */
+      var bright = [], bs = -1;
+      for (y = 0; y <= EH; y++){
+        var on = y < EH && raw[y*4+3] > 200 && raw[y*4] > 205 && raw[y*4+1] > 235 && raw[y*4] <= 232;
+        if (on && bs < 0) bs = y; else if (!on && bs >= 0){ if (y - bs <= 4) bright.push([bs, y]); bs = -1; }
+      }
+      for (var bi = 0; bi + 1 < bright.length; bi++){
+        var gap = bright[bi + 1][0] - bright[bi][1];
+        if (gap < 3 || gap > 14) continue;
+        var vy = (bright[bi][0] + bright[bi + 1][1]) / 2, vr = (bright[bi + 1][1] - bright[bi][0]) / 2 + 1, mid = Math.round(vy);
+        exx.fillStyle = '#ffffff'; exx.beginPath(); exx.arc(X(1), vy, vr, 0, 6.283); exx.fill();
+        exx.fillStyle = 'rgb(' + raw[mid*4] + ',' + raw[mid*4+1] + ',' + raw[mid*4+2] + ')'; exx.beginPath(); exx.arc(X(1), vy, Math.max(1.5, vr - 3), 0, 6.283); exx.fill();
+        bi++;
+      }
+    }
+    function at(t, d){
+      d = Math.max(0, Math.min(t.len, d));
+      for (var k = 1; k < t.acc.length; k++) if (d <= t.acc[k]){ var f = (d - t.acc[k-1]) / ((t.acc[k] - t.acc[k-1]) || 1); return [t.pts[k-1][0] + (t.pts[k][0] - t.pts[k-1][0]) * f, t.pts[k-1][1] + (t.pts[k][1] - t.pts[k-1][1]) * f]; }
+      return t.pts[t.pts.length - 1];
+    }
+    function tick(dt){
+      if (!traces.length) return;
+      if (Math.random() < dt * 2.6 && signals.length < 16){ var tr = traces[(Math.random() * traces.length) | 0]; signals.push({ t: tr, d: tr.len, v: 70 + Math.random() * 60 }); }
+      eox.clearRect(0, 0, EW, EH); eox.fillStyle = gold;
+      signals.forEach(function(s){
+        s.d -= s.v * dt;
+        for (var j = 0; j < 6; j++){ var p = at(s.t, s.d + j * 8); eox.globalAlpha = 1 - j / 6; eox.beginPath(); eox.arc(p[0], p[1], 4 - j * .45, 0, 6.283); eox.fill(); }
+      });
+      eox.globalAlpha = 1;
+      signals = signals.filter(function(s){ return s.d > -50; });
+    }
+    return { build: build, tick: tick };
+  }
+  var sides = [makeSide(true), makeSide(false)];
+  /* the haze of the sky lives on one single layer, under the picture: the picture's own haze, then its last strip mirrored tile after tile to the end of the screen. One layer, so there is no join to see. */
+  function buildHaze(){
+    var hs = document.getElementById('haze-src'), hc = document.getElementById('haze');
+    if (!hs.complete || !hs.naturalWidth){ hs.addEventListener('load', buildHaze, { once: true }); return; }
+    var r = img.getBoundingClientRect(), sc = r.width / img.naturalWidth, IW = img.naturalWidth, IH = img.naturalHeight;
+    var extra = Math.max(0, Math.ceil((window.innerWidth - r.right) / sc)), hx = hc.getContext('2d'), sw = 32;
+    hc.width = IW + extra; hc.height = IH; hc.style.width = ((IW + extra) * sc) + 'px';
+    hx.drawImage(hs, 0, 0);
+    for (var x = IW, n = 0; x < IW + extra; x += sw, n++){
+      hx.save();
+      if (n % 2 === 0){ hx.translate(x + sw, 0); hx.scale(-1, 1); hx.drawImage(hs, IW - sw, 0, sw, IH, 0, 0, sw, IH); }
+      else hx.drawImage(hs, IW - sw, 0, sw, IH, x, 0, sw, IH);
+      hx.restore();
+    }
+  }
+  function buildExt(){ buildHaze(); sides.forEach(function(s){ s.build(); }); }
+  function extFrame(dt){ sides.forEach(function(s){ s.tick(dt); }); }
+  var rz; window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ if (mask) buildExt(); }, 150); });
+
+  /* ---------- views: home, projects, about, personal ---------- */
+  var views = [].slice.call(document.querySelectorAll('.view')), navs = [].slice.call(document.querySelectorAll('[data-nav]'));
+  function route(){
+    var name = location.hash.replace('#', ''), ok = views.some(function(v){ return v.dataset.view === name; });
+    if (!ok) name = 'home';
+    document.body.dataset.view = name;
+    views.forEach(function(v){ v.hidden = v.dataset.view !== name; });
+    navs.forEach(function(a){ a.dataset.nav === name ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route); route();
+
+  /* ---------- builds <-> parts cross-highlighting ---------- */
+  var proj = document.getElementById('proj'), bin = document.getElementById('bin');
+  var rows = [].slice.call(proj.children), parts = [].slice.call(bin.children);
+  function light(keys, row){
+    var any = keys && keys.length;
+    proj.classList.toggle('dim', !!any); bin.classList.toggle('dim', !!any);
+    rows.forEach(function(r){
+      var has = any && (r === row || (!row && keys.some(function(k){ return r.dataset.parts.split(' ').indexOf(k) > -1; })));
+      r.classList.toggle('on', !!has);
+    });
+    parts.forEach(function(p){ p.classList.toggle('on', !!any && keys.indexOf(p.dataset.part) > -1); });
+  }
+  rows.forEach(function(r){
+    r.addEventListener('pointerenter', function(){ light(r.dataset.parts.split(' '), r); });
+    r.addEventListener('pointerleave', function(){ light(null); });
+  });
+  parts.forEach(function(p){
+    p.addEventListener('pointerenter', function(){ light([p.dataset.part]); });
+    p.addEventListener('pointerleave', function(){ if (!p.classList.contains('drag')) light(null); });
+    /* pick a part up; it springs back when you let go */
+    var sx0 = 0, sy0 = 0;
+    p.addEventListener('pointerdown', function(e){
+      if (reduce) return;
+      p.setPointerCapture(e.pointerId); sx0 = e.clientX; sy0 = e.clientY; p.classList.add('drag'); light([p.dataset.part]);
+    });
+    p.addEventListener('pointermove', function(e){
+      if (!p.classList.contains('drag')) return;
+      var dx = e.clientX - sx0, dy = e.clientY - sy0;
+      p.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + Math.max(-8, Math.min(8, dx / 14)) + 'deg)';
+    });
+    function drop(){ if (!p.classList.contains('drag')) return; p.classList.remove('drag'); p.style.transform = ''; light(null); }
+    p.addEventListener('pointerup', drop); p.addEventListener('pointercancel', drop);
+  });
+
+  if (img.complete && img.naturalWidth) build(); else img.addEventListener('load', build);
+  if (!reduce) requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
