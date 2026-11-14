@@ -259,14 +259,6 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       <h2 class="sec" data-es="cosas que he construido">things i've built</h2>
       <p class="sub" data-es="casi siempre en equipo, casi siempre contra el reloj. pasa el cursor sobre uno para ver qué piezas lleva.">mostly with a team, usually against a clock. point at one to see which parts went into it.</p>
       <ul class="proj" id="proj">
-        <li data-parts="esp32 max30102 ttp223 gps kicad">
-          <a class="card" href="https://devpost.com/software/panic-at-the-wrist" rel="noopener">
-            <div class="pic"><img src="img/panic-at-the-wrist.jpg" alt="KiCad schematic of the bracelet: ESP32, MAX30102, touch sensors and GPS" loading="lazy" width="816" height="612"></div>
-            <div class="txt"><h3>panic! at the wrist <span class="arr" aria-hidden="true">&#8599;</span></h3>
-            <p data-es="una pulsera que nota cuando un conductor se está quedando dormido y pide ayuda con un doble toque.">a bracelet that notices a driver drifting off and calls for help with a double tap.</p>
-            <p class="at" data-es="hecho en un hackathon">hackathon build</p></div>
-          </a>
-        </li>
         <li data-parts="python pytorch pca">
           <a class="card" href="https://github.com/santiagoalvarezv/Unsupervised-Learning-Dataset-Option-A-Visual-Inspection-at-Imperial-College-London" rel="noopener">
             <div class="pic"><img src="img/anomaly-vision.jpg" alt="A cracked hazelnut the model flagged as defective" loading="lazy" width="372" height="279"></div>
@@ -275,21 +267,13 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
             <p class="at">imperial college london</p></div>
           </a>
         </li>
-        <li data-parts="gemini elevenlabs snowflake">
-          <a class="card" href="https://devpost.com/software/roadworks-ai" rel="noopener">
-            <div class="pic"><video src="img/roadwork-ai.mp4" poster="img/roadwork-ai.jpg" autoplay muted loop playsinline preload="metadata" width="720" height="540" aria-label="3D map of Paseo de la Castellana: traffic columns shrink and turn green when the works move from 09:00 to 21:00"></video></div>
-            <div class="txt"><h3>roadwork ai <span class="arr" aria-hidden="true">&#8599;</span></h3>
-            <p data-es="eliges una calle y te dice el momento que menos molesta para abrirla, con una asistente de voz llamada aura.">pick a road and it tells you the least disruptive moment to dig it up, with a voice assistant called aura.</p>
-            <p class="at">oxhack</p></div>
+        <li data-parts="python argon">
+          <a class="card" href="https://github.com/owenbonc/scaffld" rel="noopener">
+            <div class="pic"><video src="img/scaffld.mp4" poster="img/scaffld.jpg" autoplay muted loop playsinline preload="metadata" width="640" height="480" aria-label="The student robot alone in simulation: it lifts the box, the bin is moved, and it still puts the box in"></video></div>
+            <div class="txt"><h3>scaffld <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="un agente que le enseña a un robot una habilidad nueva a partir de una sola frase; luego un modelo pequeño la ejecuta solo en una laptop.">an agent that teaches a robot a new skill from one sentence, then a small model runs it alone on a laptop.</p>
+            <p class="at" data-es="agentverse en la ucl, categoría robótica">agentverse at ucl, robotics track</p></div>
           </a>
-        </li>
-        <li data-parts="stm32 cpld oled">
-          <div class="card">
-            <div class="pic"><svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 34h28l6-10 8 26 10-46 8 30h52"/></svg></div>
-            <div class="txt"><h3>pulse oximeter</h3>
-            <p data-es="un proyecto de diseño en grupo que mide el pulso y el oxígeno en la sangre. yo hice la lógica de control y la pantalla.">a group design project that measures pulse and blood oxygen. i did the control logic and the display.</p>
-            <p class="at" data-es="university of nottingham, en curso">university of nottingham, in progress</p></div>
-          </div>
         </li>
         <li data-parts="esp32 kicad ultrasonic colour">
           <div class="card">
@@ -299,13 +283,29 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
             <p class="at" data-es="university of nottingham, primer año">university of nottingham, year one</p></div>
           </div>
         </li>
-        <li data-parts="python argon">
-          <a class="card" href="https://github.com/owenbonc/scaffld" rel="noopener">
-            <div class="pic"><video src="img/scaffld.mp4" poster="img/scaffld.jpg" autoplay muted loop playsinline preload="metadata" width="640" height="480" aria-label="The student robot alone in simulation: it lifts the box, the bin is moved, and it still puts the box in"></video></div>
-            <div class="txt"><h3>scaffld <span class="arr" aria-hidden="true">&#8599;</span></h3>
-            <p data-es="un agente que le enseña a un robot una habilidad nueva a partir de una sola frase; luego un modelo pequeño la ejecuta solo en una laptop.">an agent that teaches a robot a new skill from one sentence, then a small model runs it alone on a laptop.</p>
-            <p class="at" data-es="agentverse en la ucl, categoría robótica">agentverse at ucl, robotics track</p></div>
+        <li data-parts="gemini elevenlabs snowflake">
+          <a class="card" href="https://devpost.com/software/roadworks-ai" rel="noopener">
+            <div class="pic"><video src="img/roadwork-ai.mp4" poster="img/roadwork-ai.jpg" autoplay muted loop playsinline preload="metadata" width="720" height="540" aria-label="3D map of Paseo de la Castellana: traffic columns shrink and turn green when the works move from 09:00 to 21:00"></video></div>
+            <div class="txt"><h3>roadwork ai <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="eliges una calle y te dice el momento que menos molesta para abrirla, con una asistente de voz llamada aura.">pick a road and it tells you the least disruptive moment to dig it up, with a voice assistant called aura.</p>
+            <p class="at">oxhack</p></div>
           </a>
+        </li>
+        <li data-parts="esp32 max30102 ttp223 gps kicad">
+          <a class="card" href="https://devpost.com/software/panic-at-the-wrist" rel="noopener">
+            <div class="pic"><img src="img/panic-at-the-wrist.jpg" alt="KiCad schematic of the bracelet: ESP32, MAX30102, touch sensors and GPS" loading="lazy" width="816" height="612"></div>
+            <div class="txt"><h3>panic! at the wrist <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="una pulsera que nota cuando un conductor se está quedando dormido y pide ayuda con un doble toque.">a bracelet that notices a driver drifting off and calls for help with a double tap.</p>
+            <p class="at" data-es="hecho en un hackathon">hackathon build</p></div>
+          </a>
+        </li>
+        <li data-parts="stm32 cpld oled">
+          <div class="card">
+            <div class="pic"><svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 34h28l6-10 8 26 10-46 8 30h52"/></svg></div>
+            <div class="txt"><h3>pulse oximeter</h3>
+            <p data-es="un proyecto de diseño en grupo que mide el pulso y el oxígeno en la sangre. yo hice la lógica de control y la pantalla.">a group design project that measures pulse and blood oxygen. i did the control logic and the display.</p>
+            <p class="at" data-es="university of nottingham, en curso">university of nottingham, in progress</p></div>
+          </div>
         </li>
       </ul>
     </div>
