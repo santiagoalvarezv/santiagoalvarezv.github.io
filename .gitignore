@@ -1,0 +1,5 @@
+# tools used while building the site, not part of it
+.agents/
+.claude/
+skills-lock.json
+CLAUDE.md

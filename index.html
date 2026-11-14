@@ -6,7 +6,7 @@
 <title>Santiago Alvarez</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Layout idea: one left-aligned column of plain type sitting directly on a living circuit board.
    No cards: the board shows through everything. One authored moment: the page takes your pulse. */
@@ -14,9 +14,9 @@
   --ground:#f1e9d6; --ink:#15284a; --muted:#3f4a63; --hair:rgba(21,40,74,.2);
   --accent:#17408a; --pulse:#97290f; --signal:#f2b63c;
   --sea1:#1b3058; --sea1b:#2a4675; --sea2:#5d8fb8; --sea2b:#497aa5; --sea3:#a9c7dc; --sea3b:#c3d9e8; --foam:#fff9ec;
-  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
-  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --display:"Inter","Helvetica Neue",Arial,sans-serif;
+  --body:"Noto Sans Mono",ui-monospace,Menlo,Consolas,monospace;
+  --mono:"Noto Sans Mono",ui-monospace,Menlo,Consolas,monospace;
   --hand:"Caveat","Bradley Hand",cursive;
   --ease-out:cubic-bezier(.23,1,.32,1); --ease-in-out:cubic-bezier(.77,0,.175,1);
   /* To put your own picture behind everything: set --photo to url("data:image/jpeg;base64,...") */
@@ -25,7 +25,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scrollbar-color:var(--muted) transparent;scrollbar-width:thin}
-body{margin:0;background:var(--ground) linear-gradient(180deg,#f3ecda 0%,#ebe3cf 34%,#dbd3c0 58%,#cec6b5 80%,#c8c1b1 100%) fixed;color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;caret-color:var(--pulse);-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--ground) linear-gradient(180deg,#f3ecda 0%,#ebe3cf 34%,#dbd3c0 58%,#cec6b5 80%,#c8c1b1 100%) fixed;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;caret-color:var(--pulse);-webkit-font-smoothing:antialiased}
 ::selection{background:var(--pulse);color:var(--ground)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
 a{color:inherit}
@@ -44,7 +44,6 @@ html,body{height:100%}
 main{flex:1}
 .view{display:flex;flex-direction:column;gap:clamp(48px,8vw,88px);animation:rise 420ms var(--ease-out) both}
 .view[hidden]{display:none}
-body[data-view="home"] footer{display:none}
 
 /* nav */
 .nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 26px;padding-top:16px;font-size:16px}
@@ -53,15 +52,34 @@ body[data-view="home"] footer{display:none}
 .nav a{position:relative;display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:var(--muted);transition:color 160ms var(--ease-out)}
 .nav a::after,.draw::after{content:"";position:absolute;left:0;right:0;bottom:9px;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform 220ms var(--ease-out)}
 .nav a:active{transform:scale(.97)}
+/* language switch: globe, then en / es with the current one in ink */
+.lang{all:unset;display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-left:4px;padding-left:18px;position:relative;cursor:pointer;color:var(--muted);font:500 14px var(--mono);transition:color 160ms var(--ease-out)}
+.lang svg{margin-right:2px}
+/* a short divider between the menu and the switch, only as tall as the words */
+.lang::before{content:"";position:absolute;left:0;top:50%;width:1px;height:16px;margin-top:-8px;background:var(--hair)}
+.lang span{opacity:.55;transition:opacity 160ms ease}
+.lang span+span::before{content:"/";margin-right:6px;opacity:.6}
+html[lang="en"] .lang [data-l="en"],html[lang="es"] .lang [data-l="es"]{opacity:1;color:var(--ink)}
+.lang:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+.lang:active{transform:scale(.97)}
+/* a short fade while the words change */
+main.swap{opacity:0;transition:opacity 140ms ease}
+main{transition:opacity 220ms ease}
 
 /* hero */
 .view.hero{gap:0;padding-top:clamp(8px,4vh,48px)}
-h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(46px,min(11vw,13vh),104px);line-height:.88;letter-spacing:-.04em;text-wrap:balance}
-h1 span{display:inline-block;animation:rise 700ms var(--ease-out) both}
-h1 span:nth-child(2){animation-delay:70ms}
-.lede{margin:18px 0 0;max-width:22ch;font-size:clamp(20px,2.4vw,26px);line-height:1.3;font-weight:500;animation:rise 700ms var(--ease-out) 140ms both}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(28px,4.6vw,50px);line-height:1.15;letter-spacing:-.025em;min-height:1.15em;animation:rise 700ms var(--ease-out) both}
+/* the caret that types the greeting, like a terminal */
+h1 .caret{display:inline-block;width:.09em;height:1em;margin-left:.06em;vertical-align:-.12em;background:var(--ink);animation:blink 1s steps(1) infinite}
+h1.typing .caret{animation:none}
+@keyframes blink{50%{opacity:0}}
+/* two homes, two clocks */
+.clocks{margin:4px 0 0;display:flex;justify-content:flex-end;gap:18px;font:400 12px var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.clocks b{font-weight:500;color:var(--ink);margin-right:2px}
+.clocks i{font-style:normal;opacity:.7}
+.lede{margin:18px 0 0;max-width:30ch;font-size:clamp(20px,2.4vw,26px);line-height:1.3;font-weight:500;animation:rise 700ms var(--ease-out) 140ms both}
 .lede em{font-style:normal;color:var(--pulse)}
-.where{margin:10px 0 0;color:var(--muted);font-weight:500;max-width:30ch;animation:rise 700ms var(--ease-out) 200ms both}
+.where{margin:10px 0 0;color:var(--muted);font-weight:500;max-width:44ch;animation:rise 700ms var(--ease-out) 200ms both}
 .links{display:flex;flex-wrap:wrap;gap:4px 22px;margin-top:10px}
 .hero .links{animation:rise 700ms var(--ease-out) 260ms both}
 .draw{position:relative;display:inline-flex;align-items:center;min-height:44px;text-decoration:none;font-weight:600;color:var(--accent)}
@@ -74,14 +92,38 @@ h1 span:nth-child(2){animation-delay:70ms}
 .links:has(.ico){gap:4px 14px;align-items:center;padding-left:9px}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 
-.me{position:relative;width:clamp(150px,20vw,210px)}
-.about{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px 56px;align-items:start}
+.me{position:relative;width:clamp(190px,24vw,260px)}
+/* two prints on the desk: one tucked behind, one on top */
+.pics{position:relative;aspect-ratio:4/5}
+.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;border:7px solid #fbf7ee;box-shadow:0 1px 2px rgba(21,40,74,.18),0 10px 24px -10px rgba(21,40,74,.35);transition:transform 300ms var(--ease-out)}
+.ph.back{transform:translate(-30%,-3%) rotate(-7deg) scale(.9)}
+.ph.front{transform:rotate(2.5deg)}
+.about{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px clamp(56px,9vw,120px);align-items:start}
 .formal{margin:0 0 14px;max-width:60ch;font-size:18px}
-.yap{margin:0;max-width:44ch;font-family:var(--display);font-weight:500;font-size:clamp(22px,3vw,32px);line-height:1.2;letter-spacing:-.01em}
-.yap b{color:var(--pulse);font-weight:700}
-.shelf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}
-.shelf li{aspect-ratio:1;border:1.5px dashed var(--muted);border-radius:6px;display:grid;place-items:center;text-align:center;padding:16px;color:var(--muted);font-size:15px;transition:transform 260ms var(--ease-out)}
-.shelf li:nth-child(3n+1){transform:rotate(-1.2deg)}.shelf li:nth-child(3n){transform:rotate(1deg)}
+.intro{margin:0;max-width:56ch;font-size:clamp(18px,1.6vw,20px);line-height:1.55}
+/* the wall: covers of different shapes stacked in columns, like a pinboard */
+.wall{list-style:none;margin:0;padding:0;columns:4 140px;column-gap:clamp(10px,1.4vw,16px)}
+.wall li{break-inside:avoid;margin:0 0 16px;border-radius:4px;overflow:hidden;background:rgba(21,40,74,.06);box-shadow:0 1px 2px rgba(21,40,74,.14),0 8px 20px -12px rgba(21,40,74,.4);transition:transform 260ms var(--ease-out),box-shadow 260ms var(--ease-out)}
+.wall li.sq{aspect-ratio:1}
+.wall li.tall{aspect-ratio:2/3}
+.wall li{position:relative}
+.wall img{width:100%;height:auto;display:block}
+.wall li.sq img,.wall li.tall img{height:100%;object-fit:cover}
+/* caption slides up from the bottom of a photo on hover */
+.wall em{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 10px;font:400 12px var(--mono);font-style:normal;color:#fff;background:linear-gradient(transparent,rgba(10,18,34,.72));opacity:0;transform:translateY(6px);transition:opacity 220ms ease,transform 220ms var(--ease-out)}
+.wall li:hover em,.wall li:focus-within em{opacity:1;transform:none}
+/* songs: click the cover, a part of the song plays */
+.wall li.song button{all:unset;position:relative;display:block;width:100%;height:100%;cursor:pointer}
+.wall li.song button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wall li.song img{height:100%;object-fit:cover}
+.play{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(251,247,238,.92);box-shadow:0 4px 14px rgba(0,0,0,.25);opacity:0;transform:scale(.9);transition:opacity 200ms ease,transform 200ms var(--ease-out)}
+.play::before{content:"";position:absolute;left:21px;top:17px;border-style:solid;border-width:10px 0 10px 16px;border-color:transparent transparent transparent var(--ink)}
+.song.on .play::before{left:19px;top:18px;width:5px;height:18px;border:0;background:var(--ink);box-shadow:10px 0 0 var(--ink)}
+.wall li.song:hover .play,.song.on .play,.song button:focus-visible .play{opacity:1;transform:none}
+.song .bar{position:absolute;left:0;top:0;height:3px;width:100%;background:var(--signal);transform:scaleX(0);transform-origin:left}
+.song.on em{opacity:1;transform:none}
+#yt{position:fixed;width:1px;height:1px;left:-10px;bottom:0;opacity:0;pointer-events:none}
+.wall li > span{display:grid;place-items:center;height:100%;border:1.5px dashed var(--hair);border-radius:4px;font:400 13px var(--mono);color:var(--muted)}
 .frame{aspect-ratio:4/5;border:1.5px dashed var(--muted);border-radius:6px;display:grid;place-items:center;text-align:center;padding:14px;color:var(--muted);font-size:14px;transform:rotate(2.5deg);transition:transform 300ms var(--ease-out)}
 .note{display:block;margin:14px 0 0 34%;font-family:var(--hand);font-size:26px;line-height:1;color:var(--pulse);transform:rotate(-5deg);white-space:nowrap}
 
@@ -102,18 +144,22 @@ h1 span:nth-child(2){animation-delay:70ms}
 /* sections */
 h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp(30px,4.6vw,52px);letter-spacing:-.03em;line-height:1}
 .sub{margin:0 0 22px;color:var(--muted);max-width:60ch}
-.proj{list-style:none;margin:0;padding:0;border-top:1px solid var(--hair)}
-.proj li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:6px 36px;padding:22px 0;border-bottom:1px solid var(--hair);position:relative;transition:opacity 200ms ease}
-.proj li::before{content:"";position:absolute;left:-14px;top:30px;width:7px;height:7px;border-radius:50%;background:var(--pulse);transform:scale(0);transition:transform 220ms var(--ease-out)}
-.proj h3{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;line-height:1.1;transition:transform 220ms var(--ease-out)}
-.proj .at{margin:4px 0 0;color:var(--muted);font-size:15px}
-.proj p{margin:0}
-.proj .mine{margin-top:8px;color:var(--muted)}
-.proj .mine b{color:var(--ink);font-weight:600}
-.proj a{color:var(--accent);font-weight:600;text-underline-offset:4px}
+/* project grid: framed cards, picture on top, a title and one line under it */
+.proj{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:22px}
+.proj li{position:relative;border:3px double var(--ink);background:rgba(246,240,226,.92);transition:opacity 200ms ease,transform 260ms var(--ease-out)}
+.proj .card{display:flex;flex-direction:column;height:100%;color:inherit;text-decoration:none}
+.proj .pic{aspect-ratio:4/3;border-bottom:1.5px solid var(--ink);background:#fbf7ee;overflow:hidden;display:grid;place-items:center}
+.proj .pic img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 420ms var(--ease-out)}
+.proj .pic svg{width:46%;height:auto;color:var(--sea2)}
+.proj .pic.white{background:#fff}
+.proj .pic.white img{object-fit:contain;padding:3%}
+.proj .txt{padding:14px 16px 18px}
+.proj h3{margin:0;font-family:var(--body);font-weight:500;font-size:17px;line-height:1.3;display:flex;align-items:baseline;gap:6px}
+.proj h3 .arr{display:inline-block;font-size:15px;transition:transform 220ms var(--ease-out)}
+.proj p{margin:6px 0 0;color:var(--muted);font-size:15px;line-height:1.5}
+.proj .at{margin:10px 0 0;font:400 12px var(--mono);letter-spacing:.02em;color:var(--muted);opacity:.85}
 .proj.dim li:not(.on){opacity:.38}
-.proj li.on::before{transform:scale(1)}
-.proj li.on h3{transform:translateX(6px)}
+.proj li.on{transform:translateY(-3px)}
 
 /* parts bin */
 .bin{display:flex;flex-wrap:wrap;gap:16px 14px;padding:0;margin:0;list-style:none}
@@ -125,7 +171,6 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
 .part.drag{cursor:grabbing;transition:background 160ms ease,color 160ms ease;z-index:3}
 .part.on{background:var(--ink);color:var(--ground)}
 .bin.dim .part:not(.on){opacity:.35}
-.hint{font-family:var(--hand);font-size:24px;color:var(--pulse);margin:18px 0 0;transform:rotate(-1.5deg);display:inline-block}
 
 /* trail */
 .trail{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--hair)}
@@ -134,23 +179,32 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
 .trail b{font-weight:600}
 .trail span{color:var(--muted)}
 
-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;color:var(--muted);font-size:15px}
 
 @media (hover:hover) and (pointer:fine){
   .nav a:hover{color:var(--ink)} .nav a:hover::after{transform:scaleX(1)}
+  .lang:hover span{opacity:1}
   .draw:hover::after{opacity:1;animation:redraw 420ms var(--ease-out)}
-  .frame:hover{transform:rotate(0deg) scale(1.02)}
+  .pics:hover .ph.front{transform:rotate(0deg) translate(6%,2%)}
+  .pics:hover .ph.back{transform:translate(-36%,-5%) rotate(-9deg) scale(.9)}
   .ico:hover{transform:translateY(-2px)}
-  .shelf li:hover{transform:translateY(-3px) rotate(0deg)}
+  .wall li:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(21,40,74,.16),0 14px 28px -12px rgba(21,40,74,.45)}
+  .proj a.card:hover .pic img{transform:scale(1.03)}
+  .proj a.card:hover .arr{transform:translate(2px,-2px)}
   .part:hover:not(.drag){transform:translateY(-2px)}
   .beat:hover{transform:scale(1.03)}
 }
 @keyframes redraw{0%{transform:scaleX(1);transform-origin:right}49%{transform:scaleX(0);transform-origin:right}50%{transform:scaleX(0);transform-origin:left}100%{transform:scaleX(1);transform-origin:left}}
 @media (max-width:720px){
   .about{grid-template-columns:1fr}
-  .nav{justify-content:flex-start}
-  .proj li{grid-template-columns:1fr}
-  .proj li::before{display:none}
+  h1{min-height:2.3em}
+  .clocks{gap:14px;margin-top:2px}
+  .me{margin:12px 0 0 30%;width:min(60%,240px)}
+  .nav{justify-content:flex-start;gap:4px 12px;font-size:14px}
+  /* on a phone the switch shows only the globe and the current language */
+  .lang{padding-left:0;margin-left:auto}
+  .lang::before{content:none}
+  .lang span+span::before{content:none}
+  html[lang="en"] .lang [data-l="es"],html[lang="es"] .lang [data-l="en"]{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:1ms !important;animation-delay:0ms !important;transition-duration:1ms !important}
@@ -165,66 +219,89 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;c
 <div class="page">
   <header>
     <nav class="nav" aria-label="Sections">
-      <a href="#home" data-nav="home">home</a>
-      <a href="#projects" data-nav="projects">projects</a>
-      <a href="#about" data-nav="about">about</a>
+      <a href="#home" data-nav="home" data-es="inicio">home</a>
+      <a href="#projects" data-nav="projects" data-es="proyectos">projects</a>
+      <a href="#about" data-nav="about" data-es="sobre mí">about</a>
       <a href="#ayrton" data-nav="ayrton">ayrton</a>
+      <button type="button" class="lang" id="lang" aria-label="Ver en español"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/></svg><span data-l="en">en</span><span data-l="es">es</span></button>
     </nav>
+    <p class="clocks" aria-label="local time in london and lima">
+      <span><b>ldn</b> <time id="t-lon">--:--:--</time> <i id="z-lon">gmt</i></span>
+      <span><b>lim</b> <time id="t-lim">--:--:--</time> <i>pet</i></span>
+    </p>
   </header>
 
   <main>
   <section class="view hero" id="view-home" data-view="home">
-    <h1><span>santiago</span> <span>alvarez</span></h1>
-    <p class="lede">i wire things up, then teach them to <em>think</em>.</p>
-    <p class="where">electrical &amp; electronic engineering student / ai builder</p>
+    <h1 aria-label="santiago alvarez"><span class="type" id="type" aria-hidden="true">hello world! i'm santiago alvarez.</span><span class="caret" aria-hidden="true"></span></h1>
+    <p class="lede" data-es="conecto cosas y luego les enseño a &lt;em&gt;pensar&lt;/em&gt;.">i wire things up, then teach them to <em>think</em>.</p>
+    <p class="where" data-es="estudiante de ingeniería eléctrica y electrónica / construyo con ia">electrical &amp; electronic engineering student / ai builder</p>
     <div class="links">
       <a class="ico" href="https://github.com/santiagoalvarezv" rel="me noopener" aria-label="GitHub" title="GitHub"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/github.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('github'))"></a>
       <a class="ico" href="https://www.linkedin.com/in/santiago-alvarezv/" rel="me noopener" aria-label="LinkedIn" title="LinkedIn"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/linkedin.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('linkedin'))"></a>
-      <a class="ico" href="https://devpost.com/" rel="me noopener" aria-label="Devpost" title="Devpost"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/devpost.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('devpost'))"></a>
+      <a class="ico" href="https://devpost.com/santiagoalvarezvalencia28" rel="me noopener" aria-label="Devpost" title="Devpost"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/devpost.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('devpost'))"></a>
       <a class="ico" href="mailto:eeysa23@nottingham.ac.uk" aria-label="Email eeysa23@nottingham.ac.uk" title="eeysa23@nottingham.ac.uk"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3.5 7l8.5 6.5L20.5 7"></path></svg></a>
     </div>
   </section>
 
   <section class="view" id="view-projects" data-view="projects" hidden>
     <div>
-      <h2 class="sec">things i've built</h2>
-      <p class="sub">mostly with a team, usually against a clock. point at one to see which parts went into it.</p>
+      <h2 class="sec" data-es="cosas que he construido">things i've built</h2>
+      <p class="sub" data-es="casi siempre en equipo, casi siempre contra el reloj. pasa el cursor sobre uno para ver qué piezas lleva.">mostly with a team, usually against a clock. point at one to see which parts went into it.</p>
       <ul class="proj" id="proj">
         <li data-parts="esp32 max30102 ttp223 gps kicad">
-          <div><h3>panic! at the wrist</h3><p class="at">hackathon build</p></div>
-          <div><p>a bracelet that notices a driver drifting off and calls for help with a double tap.</p>
-          <p class="mine"><b>my part:</b> all the electronics, from sensors to circuit. <b>what broke:</b> solder joints, repeatedly, and one sensor that died on day two.</p></div>
+          <a class="card" href="https://devpost.com/software/panic-at-the-wrist" rel="noopener">
+            <div class="pic"><img src="img/panic-at-the-wrist.jpg" alt="KiCad schematic of the bracelet: ESP32, MAX30102, touch sensors and GPS" loading="lazy" width="816" height="612"></div>
+            <div class="txt"><h3>panic! at the wrist <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="una pulsera que nota cuando un conductor se está quedando dormido y pide ayuda con un doble toque.">a bracelet that notices a driver drifting off and calls for help with a double tap.</p>
+            <p class="at" data-es="hecho en un hackathon">hackathon build</p></div>
+          </a>
         </li>
         <li data-parts="python pytorch pca">
-          <div><h3>anomaly vision</h3><p class="at">imperial college london, summer programme</p></div>
-          <div><p>finding defects in bottles, hazelnuts, metal nuts, transistors and wood with three different methods. named a top 3 final project.</p>
-          <p class="mine"><b>what i learned:</b> comparing pixel by pixel falls apart the moment a part is rotated. <a href="https://github.com/santiagoalvarezv/Unsupervised-Learning-Dataset-Option-A-Visual-Inspection-at-Imperial-College-London">read the code</a></p></div>
-        </li>
-        <li data-parts="stm32 cpld oled">
-          <div><h3>pulse oximeter</h3><p class="at">university of nottingham, in progress</p></div>
-          <div><p>a group design project that measures pulse and blood oxygen.</p>
-          <p class="mine"><b>my part:</b> the control logic and the display.</p></div>
-        </li>
-        <li data-parts="python argon">
-          <div><h3>roboteacher</h3><p class="at">agentverse at ucl, robotics track</p></div>
-          <div><p>a robot that teaches with no internet connection, the model running on the machine itself.</p>
-          <p class="mine"><b>my part:</b> the ai teacher.</p></div>
+          <a class="card" href="https://github.com/santiagoalvarezv/Unsupervised-Learning-Dataset-Option-A-Visual-Inspection-at-Imperial-College-London" rel="noopener">
+            <div class="pic"><img src="img/anomaly-vision.jpg" alt="A cracked hazelnut the model flagged as defective" loading="lazy" width="372" height="279"></div>
+            <div class="txt"><h3>anomaly vision <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="encontrar defectos en botellas, avellanas, tuercas, transistores y madera con tres métodos. top 3 de proyectos finales.">finding defects in bottles, hazelnuts, metal nuts, transistors and wood with three methods. top 3 final project.</p>
+            <p class="at">imperial college london</p></div>
+          </a>
         </li>
         <li data-parts="gemini elevenlabs snowflake">
-          <div><h3>roadwork ai</h3><p class="at">oxhack</p></div>
-          <div><p>pick a road and it tells you the least disruptive moment to dig it up. it comes with a voice assistant called aura.</p>
-          <p class="mine"><b>how it changed:</b> it started as an idea to ease traffic in lima.</p></div>
+          <a class="card" href="https://devpost.com/software/roadworks-ai" rel="noopener">
+            <div class="pic"><img src="img/roadwork-ai.jpg" alt="Map of Madrid with clusters of planned roadworks" loading="lazy" width="960" height="720"></div>
+            <div class="txt"><h3>roadwork ai <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="eliges una calle y te dice el momento que menos molesta para abrirla, con una asistente de voz llamada aura.">pick a road and it tells you the least disruptive moment to dig it up, with a voice assistant called aura.</p>
+            <p class="at">oxhack</p></div>
+          </a>
         </li>
-        <li data-parts="python forecasting">
-          <div><h3>reactor forecasting</h3><p class="at">supervised learning summer school</p></div>
-          <div><p>predicting how a simulated chemical reactor behaves over time by averaging three models.</p>
-          <p class="mine"><b>my part:</b> the averaging, and the conclusions.</p></div>
+        <li data-parts="stm32 cpld oled">
+          <div class="card">
+            <div class="pic"><svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 34h28l6-10 8 26 10-46 8 30h52"/></svg></div>
+            <div class="txt"><h3>pulse oximeter</h3>
+            <p data-es="un proyecto de diseño en grupo que mide el pulso y el oxígeno en la sangre. yo hice la lógica de control y la pantalla.">a group design project that measures pulse and blood oxygen. i did the control logic and the display.</p>
+            <p class="at" data-es="university of nottingham, en curso">university of nottingham, in progress</p></div>
+          </div>
+        </li>
+        <li data-parts="esp32 kicad ultrasonic colour">
+          <div class="card">
+            <div class="pic white"><img src="img/eeebot.jpg" width="1200" height="527" alt="The EEEBot: a two-level purple PCB robot with an ESP32, ultrasonic sensor, LED strip and wheels" loading="lazy"></div>
+            <div class="txt"><h3>eeebot</h3>
+            <p data-es="un robot con esp32 hecho durante todo un año, de protoboard a sistema completo: sigue líneas con pid, tiene sensor de color y resuelve un laberinto solo.">an esp32 robot built over a whole year, from breadboard to full system: pid line following, a colour sensor and a maze to solve on its own.</p>
+            <p class="at" data-es="university of nottingham, primer año">university of nottingham, year one</p></div>
+          </div>
+        </li>
+        <li data-parts="python argon">
+          <a class="card" href="https://github.com/owenbonc/scaffld" rel="noopener">
+            <div class="pic"><img src="img/roboteacher.jpg" alt="A simulated humanoid robot placing an orange box into a green bin" loading="lazy" width="640" height="480"></div>
+            <div class="txt"><h3>roboteacher <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <p data-es="un agente que le enseña a un robot una habilidad nueva a partir de una sola frase; luego un modelo pequeño la ejecuta solo en una laptop.">an agent that teaches a robot a new skill from one sentence, then a small model runs it alone on a laptop.</p>
+            <p class="at" data-es="agentverse en la ucl, categoría robótica">agentverse at ucl, robotics track</p></div>
+          </a>
         </li>
       </ul>
     </div>
     <div>
-      <h2 class="sec">parts bin</h2>
-      <p class="sub">what's on my bench. chips with legs are hardware, the rest is software. point at a part to see where it ended up.</p>
+      <h2 class="sec" data-es="caja de piezas">parts bin</h2>
+      <p class="sub" data-es="lo que hay en mi mesa. los chips con patitas son hardware, lo demás es software. pasa el cursor sobre una pieza para ver dónde terminó.">what's on my bench. chips with legs are hardware, the rest is software. point at a part to see where it ended up.</p>
       <ul class="bin" id="bin">
         <li class="part" data-part="esp32">ESP32-S3</li>
         <li class="part" data-part="stm32">STM32</li>
@@ -233,79 +310,78 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;c
         <li class="part" data-part="ttp223">TTP223</li>
         <li class="part" data-part="gps">NEO-6M GPS</li>
         <li class="part" data-part="oled">OLED</li>
+        <li class="part" data-part="ultrasonic">HC-SR04</li>
+        <li class="part" data-part="colour">TCS3200</li>
         <li class="part soft" data-part="kicad">KiCad</li>
         <li class="part soft" data-part="python">Python</li>
         <li class="part soft" data-part="pytorch">PyTorch</li>
         <li class="part soft" data-part="pca">PCA</li>
-        <li class="part soft" data-part="forecasting">gradient boosting</li>
         <li class="part soft" data-part="argon">Argon</li>
         <li class="part soft" data-part="gemini">Gemini API</li>
         <li class="part soft" data-part="elevenlabs">ElevenLabs</li>
         <li class="part soft" data-part="snowflake">Snowflake</li>
       </ul>
-      <p class="hint">go on, pick one up. they snap back.</p>
     </div>
   </section>
 
   <section class="view" id="view-about" data-view="about" hidden>
     <div class="about">
       <div>
-        <h2 class="sec">about</h2>
-        <p class="formal">I am an Electrical and Electronic Engineering student at the University of Nottingham (BEng, 2025 to 2028), based in London.</p>
-        <p class="formal">My work sits where hardware meets machine learning: I design and build the electronics, then write the models that make sense of what they measure. I have done this in university projects, at a summer programme at Imperial College London, and in hackathon teams.</p>
-        <p class="formal">My goal is a master's degree in artificial intelligence.</p>
+        <h2 class="sec" data-es="sobre mí">about</h2>
+        <p class="formal" data-es="Estudio Ingeniería Eléctrica y Electrónica en la Universidad de Nottingham (BEng, 2025 a 2028) y vivo en Londres.">I am an Electrical and Electronic Engineering student at the University of Nottingham (BEng, 2025 to 2028), based in London.</p>
+        <p class="formal" data-es="Mi trabajo está donde el hardware se cruza con el machine learning: diseño y construyo la electrónica, y luego escribo los modelos que le dan sentido a lo que mide. Lo he hecho en proyectos de la universidad, en un programa de verano en Imperial College London y en equipos de hackathon.">My work sits where hardware meets machine learning: I design and build the electronics, then write the models that make sense of what they measure. I have done this in university projects, at a summer programme at Imperial College London, and in hackathon teams.</p>
+        <p class="formal" data-es="Mi meta es una maestría en inteligencia artificial.">My goal is a master's degree in artificial intelligence.</p>
         <div class="links">
           <a class="ico" href="https://github.com/santiagoalvarezv" rel="me noopener" aria-label="GitHub" title="GitHub"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/github.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('github'))"></a>
           <a class="ico" href="https://www.linkedin.com/in/santiago-alvarezv/" rel="me noopener" aria-label="LinkedIn" title="LinkedIn"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/linkedin.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('linkedin'))"></a>
-          <a class="ico" href="https://devpost.com/" rel="me noopener" aria-label="Devpost" title="Devpost"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/devpost.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('devpost'))"></a>
-          <a class="ico" href="mailto:eeysa23@nottingham.ac.uk" aria-label="Email eeysa23@nottingham.ac.uk" title="eeysa23@nottingham.ac.uk"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3.5 7l8.5 6.5L20.5 7"></path></svg></a>
-          <span class="draw todo">[add your cv]</span>
-        </div>
+          <a class="ico" href="https://devpost.com/santiagoalvarezvalencia28" rel="me noopener" aria-label="Devpost" title="Devpost"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/devpost.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('devpost'))"></a>
+          <a class="ico" href="mailto:eeysa23@nottingham.ac.uk" aria-label="Email eeysa23@nottingham.ac.uk" title="eeysa23@nottingham.ac.uk"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3.5 7l8.5 6.5L20.5 7"></path></svg></a>        </div>
       </div>
       <div class="me">
-        <div class="frame">[your photo goes here]</div>
-        <span class="note">&#8598; that's me</span>
+        <div class="pics">
+          <img class="ph back" src="img/me-closeup.jpg" alt="Santiago up close, soldering iron in hand" width="800" height="1000">
+          <img class="ph front" src="img/me-soldering.jpg" alt="Santiago bent over a board, soldering" width="800" height="1000">
+        </div>
+        <span class="note" data-es="&#8598; ese soy yo">&#8598; that's me</span>
       </div>
     </div>
     <div>
-      <h2 class="sec">trail</h2>
-      <p class="sub">education and where i've been lately.</p>
+      <h2 class="sec" data-es="recorrido">trail</h2>
+      <p class="sub" data-es="estudios y por dónde he andado últimamente.">education and where i've been lately.</p>
       <ol class="trail">
-        <li><time>2025 to 2028</time><div><b>university of nottingham</b> <span>beng electrical and electronic engineering</span></div></li>
-        <li><time>nov 2026</time><div><b>agentverse</b> <span>ucl ai society hackathon, london</span></div></li>
-        <li><time>2026</time><div><b>oxhack</b> <span>built roadwork ai in about 25 hours</span></div></li>
-        <li><time>summer 2026</time><div><b>imperial college london</b> <span>three week programme in ai and autonomous industrial systems</span></div></li>
-        <li><time>jun 2026</time><div><b>vivatech</b> <span>paris</span></div></li>
+        <li><time data-es="2025 a 2028">2025 to 2028</time><div><b>university of nottingham</b> <span data-es="beng ingeniería eléctrica y electrónica">beng electrical and electronic engineering</span></div></li>
+        <li><time>nov 2026</time><div><b>agentverse</b> <span data-es="hackathon de la ucl ai society, londres">ucl ai society hackathon, london</span></div></li>
+        <li><time>2026</time><div><b>oxhack</b> <span data-es="hice roadwork ai en unas 25 horas">built roadwork ai in about 25 hours</span></div></li>
+        <li><time data-es="verano 2026">summer 2026</time><div><b>imperial college london</b> <span data-es="programa de tres semanas en ia y sistemas industriales autónomos">three week programme in ai and autonomous industrial systems</span></div></li>
+        <li><time data-es="jun 2026">jun 2026</time><div><b>vivatech</b> <span>paris</span></div></li>
       </ol>
     </div>
   </section>
 
   <section class="view" id="view-ayrton" data-view="ayrton" hidden>
     <div>
-      <h2 class="sec">the rest of me</h2>
-      <p class="sub">not the cv. the things i love and the things that show who i am.</p>
-      <p class="yap">i can't shut up about <b>semiconductors</b>, <b>robotics</b> and <b>quantum computing</b>. i'll cross a border for a good tech fair, and i keep signing up for hackathons that don't let me sleep.</p>
+      <h2 class="sec" data-es="el resto de mí">the rest of me</h2>
+      <!-- write a few lines here -->
+      <p class="intro" data-es="aquí van unas líneas sobre mí.">a few lines about me go here.</p>
     </div>
-    <div>
-      <ul class="shelf">
-        <li>[a song you play on repeat]</li>
-        <li>[a film you'd rewatch tomorrow]</li>
-        <li>[a photo of you building something]</li>
-        <li>[a place that feels like home]</li>
-        <li>[a book that changed your mind]</li>
-        <li>[a team, a sport or a hobby]</li>
-        <li>[someone you look up to]</li>
-        <li>[the thing nobody expects about you]</li>
-      </ul>
-      <p class="hint">these are waiting for you, santiago. send me yours.</p>
-    </div>
+    <!-- the wall: one <li> per thing. photos keep their own shape:
+         <li><img src="img/rest/name.jpg" alt="what it is"><em>caption</em></li>
+         placeholders: class "sq" = square (songs), "tall" = poster -->
+    <ul class="wall">
+      <li><img src="img/rest/cat-sitting.jpg" alt="My cat sitting up, looking straight at the camera" loading="lazy" width="755" height="1400"><em data-es="el amor de mi vida">the love of my life</em></li>
+      <li><img src="img/rest/forrest-gump.jpg" alt="Forrest Gump poster: Forrest on a bench with his suitcase" loading="lazy" width="500" height="750"><em data-es="película favorita">favourite film</em></li>
+      <li class="sq song"><button type="button" data-yt="3Z7LDbbC3qc" data-start="123" data-end="162" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/17/af/4f/17af4f54-993d-b209-8bc7-46ea888f1280/mzaf_1848130934536833127.plus.aac.p.m4a" aria-label="Play a part of LIMBO by keshi"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/e2/de/98/e2de9860-b40b-e33f-f68e-ab8e0956a538/22UMGIM07345.rgb.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>limbo, keshi</em></li>
+      <li><img src="img/rest/machu-picchu.jpg" alt="Me as a small kid at Machu Picchu, Huayna Picchu behind me" loading="lazy" width="716" height="1024"><em data-es="machu picchu, yo chiquito">machu picchu, very small me</em></li>
+      <li><img src="img/rest/paris-2024.jpg" alt="Tennis at Roland Garros during the Paris 2024 Olympics, the crowd on its feet" loading="lazy" width="900" height="1200"><em>paris 2024</em></li>
+      <li class="sq song"><button type="button" data-yt="2tQVGWh04fc" data-start="0" data-end="45" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/93/34/3d/93343d81-7f22-b560-b03b-4483b4cf68e9/mzaf_10675513524040284726.plus.aac.p.m4a" aria-label="Play a part of Cómo pasa el tiempo by El Cuarteto de Nos"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f2/ee/b2/f2eeb2ec-1a06-f98a-9749-e8ed97475868/825646211937.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>cómo pasa el tiempo, el cuarteto de nos</em></li>
+      <li><img src="img/rest/wing.jpg" alt="A plane wing at sunset above the clouds" loading="lazy" width="900" height="1200"><em data-es="yo cada vez que vuelvo a casa">Me everytime I go back home</em></li>
+      <li class="sq song"><button type="button" data-yt="tFXnN6Onrbg" data-start="70" data-end="120" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/9d/33/089d3339-b1c2-8554-592b-cc1e10f1d587/mzaf_16539312582166798587.plus.aac.p.m4a" aria-label="Play a part of BABY I'M BACK by The Kid LAROI"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/93/2b/87/932b8783-6114-4328-6b18-d56aa7614c0b/196874338308.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>baby i'm back, the kid laroi</em></li>
+      <li><img src="img/rest/cat-yawn.jpg" alt="My cat lying on the bed, mid-yawn" loading="lazy" width="900" height="1200"><em data-es="ella otra vez">her again</em></li>
+      <li class="sq song"><button type="button" data-yt="_t88D1ygVMU" data-start="26" data-end="254" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/96/c4/8d/96c48dab-5a8f-ecb9-0385-7c6724ddd663/mzaf_5827516530338918168.plus.aac.p.m4a" aria-label="Play a part of Cuando pienses en volver by Pedro Suárez-Vértiz"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/31/ec/e2/31ece2a7-c988-0892-5efa-a58ae9d97895/7751546000322.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em data-es="cuando pienses en volver, pedro suárez-vértiz. mi vida en una canción">cuando pienses en volver, pedro suárez-vértiz. my life in one song</em></li>
+    </ul>
   </section>
   </main>
 
-  <footer>
-    <span>want to build something? <a class="draw" href="mailto:eeysa23@nottingham.ac.uk">eeysa23@nottingham.ac.uk</a></span>
-    <span>made by hand in london.</span>
-  </footer>
 </div>
 
 <script>
@@ -608,6 +684,57 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;c
   }
   window.addEventListener('hashchange', route); route();
 
+  /* ---------- the greeting types itself, english then spanish, then starts over ---------- */
+  var typeEl = document.getElementById('type'), h1 = typeEl.parentNode;
+  var greet = { en: "hello world! i'm santiago alvarez.", es: "¡hola mundo! soy santiago alvarez." };
+  if (!reduce) (function(){
+    var order = document.documentElement.lang === 'es' ? ['es', 'en'] : ['en', 'es'], k = 0, i = 0, del = false;
+    typeEl.textContent = '';
+    function step(){
+      var text = greet[order[k % 2]];
+      h1.classList.add('typing');
+      if (!del){
+        i++; typeEl.textContent = text.slice(0, i);
+        if (i === text.length){ del = true; h1.classList.remove('typing'); return setTimeout(step, 2600); }
+        return setTimeout(step, 55 + Math.random() * 60);
+      }
+      i--; typeEl.textContent = text.slice(0, i);
+      if (i === 0){ del = false; k++; h1.classList.remove('typing'); return setTimeout(step, 450); }
+      setTimeout(step, 28);
+    }
+    setTimeout(step, 500);
+  })();
+
+  /* ---------- two homes, two clocks ---------- */
+  function clock(zone){ return new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()); }
+  var tLon = document.getElementById('t-lon'), tLim = document.getElementById('t-lim'), zLon = document.getElementById('z-lon');
+  function tickClocks(){
+    try {
+      tLon.textContent = clock('Europe/London'); tLim.textContent = clock('America/Lima');
+      var z = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', timeZoneName: 'short' }).formatToParts(new Date()).filter(function(p){ return p.type === 'timeZoneName'; })[0];
+      zLon.textContent = z && z.value === 'BST' ? 'bst' : 'gmt';
+    } catch (e) {}
+  }
+  tickClocks(); setInterval(tickClocks, 1000);
+
+  /* ---------- language: every translatable element carries its spanish in data-es ---------- */
+  var trans = [].slice.call(document.querySelectorAll('[data-es]')), langBtn = document.getElementById('lang'), mainEl = document.querySelector('main');
+  trans.forEach(function(el){ el.dataset.en = el.innerHTML; });
+  function setLang(l, fade){
+    function apply(){
+      trans.forEach(function(el){ el.innerHTML = l === 'es' ? el.dataset.es : el.dataset.en; });
+      document.documentElement.lang = l;
+      langBtn.setAttribute('aria-label', l === 'es' ? 'View in English' : 'Ver en español');
+      try { localStorage.setItem('lang', l); } catch (e) {}
+    }
+    if (!fade || reduce) { apply(); return; }
+    mainEl.classList.add('swap');
+    setTimeout(function(){ apply(); mainEl.classList.remove('swap'); }, 140);
+  }
+  langBtn.addEventListener('click', function(){ setLang(document.documentElement.lang === 'es' ? 'en' : 'es', true); });
+  var saved = null; try { saved = localStorage.getItem('lang'); } catch (e) {}
+  if (saved === 'es') setLang('es', false);
+
   /* ---------- builds <-> parts cross-highlighting ---------- */
   var proj = document.getElementById('proj'), bin = document.getElementById('bin');
   var rows = [].slice.call(proj.children), parts = [].slice.call(bin.children);
@@ -641,6 +768,73 @@ footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;c
     function drop(){ if (!p.classList.contains('drag')) return; p.classList.remove('drag'); p.style.transform = ''; light(null); }
     p.addEventListener('pointerup', drop); p.addEventListener('pointercancel', drop);
   });
+
+  /* ---------- songs on the wall: click a cover, a part of the song plays ----------
+     each song button can carry:
+       data-audio  a clip of your own (mp3) in img/rest/  -> always works, plays start..end of that file
+       data-yt     a YouTube video id                     -> plays start..end of the real song
+       data-preview  Apple Music's 30 s preview           -> fallback when YouTube refuses to play
+     data-start / data-end are in seconds. */
+  var songs = [].slice.call(document.querySelectorAll('.song button')), yt = null, ytReady = false, failed = {};
+  var au = new Audio(), current = null, mode = '', raf = 0, pending = null, from = 0, to = 0;
+  au.preload = 'none';
+  function loadYT(){
+    if (yt || !songs.length) return;
+    var holder = document.createElement('div'); holder.id = 'yt'; document.body.appendChild(holder);
+    window.onYouTubeIframeAPIReady = function(){
+      yt = new YT.Player('yt', { width: 1, height: 1, playerVars: { playsinline: 1, controls: 0, origin: location.origin },
+        events: { onReady: function(){ ytReady = true; if (pending) { var p = pending; pending = null; p.click(); } },
+          onStateChange: function(e){ if (e.data === 0 && mode === 'yt') stop(); },
+          /* 101/150: the owner does not allow embedding here (often because ads are blocked); only that video falls back */
+          onError: function(){ if (current && mode === 'yt') { failed[current.dataset.yt] = true; playAudio(current, true); } } } });
+    };
+    var s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s);
+    yt = true;
+  }
+  function now(){ return mode === 'yt' ? (ytReady && yt.getCurrentTime()) || from : au.currentTime; }
+  function stop(){
+    if (!current) return;
+    current.parentNode.classList.remove('on'); current.querySelector('.bar').style.transform = 'scaleX(0)';
+    if (mode === 'yt' && ytReady) yt.pauseVideo();
+    au.pause(); current = null; mode = ''; cancelAnimationFrame(raf);
+  }
+  function tick(){
+    if (!current) return;
+    var t = now();
+    current.querySelector('.bar').style.transform = 'scaleX(' + Math.max(0, Math.min(1, (t - from) / (to - from))) + ')';
+    if (t >= to) { stop(); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function playAudio(b, fallback){
+    var own = b.dataset.audio && !fallback;
+    var src = own ? b.dataset.audio : b.dataset.preview;
+    if (!src) { stop(); return; }
+    if (mode === 'yt' && ytReady) yt.pauseVideo();
+    mode = 'audio';
+    from = own ? +b.dataset.start || 0 : 0;
+    to = own ? +b.dataset.end || 1e9 : Math.min(30, (+b.dataset.end - +b.dataset.start) || 30);
+    if (au.src.indexOf(src) < 0) au.src = src;
+    au.currentTime = from;
+    au.play().catch(function(){ stop(); });
+  }
+  au.addEventListener('ended', function(){ if (mode === 'audio') stop(); });
+  songs.forEach(function(b){
+    b.addEventListener('click', function(){
+      if (current === b) { stop(); return; }
+      stop();
+      current = b; b.parentNode.classList.add('on');
+      if (b.dataset.audio || !b.dataset.yt || failed[b.dataset.yt]) playAudio(b, !b.dataset.audio);
+      else if (!ytReady) { current = null; b.parentNode.classList.remove('on'); pending = b; loadYT(); return; }
+      else {
+        mode = 'yt'; from = +b.dataset.start; to = +b.dataset.end;
+        yt.loadVideoById({ videoId: b.dataset.yt, startSeconds: from, endSeconds: to });
+        yt.unMute(); yt.setVolume(100);
+      }
+      raf = requestAnimationFrame(tick);
+    });
+  });
+  /* get the player ready as soon as the wall is on screen, so the first click plays straight away */
+  if (songs.length) { if (document.body.dataset.view === 'ayrton') loadYT(); window.addEventListener('hashchange', function(){ if (location.hash === '#ayrton') loadYT(); else stop(); }); }
 
   if (img.complete && img.naturalWidth) build(); else img.addEventListener('load', build);
   if (!reduce) requestAnimationFrame(frame);
