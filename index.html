@@ -159,7 +159,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
 .proj li{position:relative;border:3px double var(--ink);background:rgba(246,240,226,.92);transition:opacity 200ms ease,transform 260ms var(--ease-out)}
 .proj .card{display:flex;flex-direction:column;height:100%;color:inherit;text-decoration:none}
 .proj .pic{aspect-ratio:4/3;border-bottom:1.5px solid var(--ink);background:#fbf7ee;overflow:hidden;display:grid;place-items:center}
-.proj .pic img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 420ms var(--ease-out)}
+.proj .pic img,.proj .pic video{width:100%;height:100%;object-fit:cover;display:block;transition:transform 420ms var(--ease-out)}
 .proj .pic svg{width:46%;height:auto;color:var(--sea2)}
 .proj .pic.white{background:#fff}
 .proj .pic.white img{object-fit:contain;padding:3%}
@@ -198,7 +198,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
   .pics:hover .ph.back{transform:translate(-36%,-5%) rotate(-9deg) scale(.9)}
   .ico:hover{transform:translateY(-2px)}
   .wall li:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(21,40,74,.16),0 14px 28px -12px rgba(21,40,74,.45)}
-  .proj a.card:hover .pic img{transform:scale(1.03)}
+  .proj a.card:hover .pic img,.proj a.card:hover .pic video{transform:scale(1.03)}
   .proj a.card:hover .arr{transform:translate(2px,-2px)}
   .part:hover:not(.drag){transform:translateY(-2px)}
   .beat:hover{transform:scale(1.03)}
@@ -277,7 +277,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
         </li>
         <li data-parts="gemini elevenlabs snowflake">
           <a class="card" href="https://devpost.com/software/roadworks-ai" rel="noopener">
-            <div class="pic"><img src="img/roadwork-ai.jpg" alt="Map of Madrid with clusters of planned roadworks" loading="lazy" width="960" height="720"></div>
+            <div class="pic"><video src="img/roadwork-ai.mp4" poster="img/roadwork-ai.jpg" autoplay muted loop playsinline preload="metadata" width="720" height="540" aria-label="3D map of Paseo de la Castellana: traffic columns shrink and turn green when the works move from 09:00 to 21:00"></video></div>
             <div class="txt"><h3>roadwork ai <span class="arr" aria-hidden="true">&#8599;</span></h3>
             <p data-es="eliges una calle y te dice el momento que menos molesta para abrirla, con una asistente de voz llamada aura.">pick a road and it tells you the least disruptive moment to dig it up, with a voice assistant called aura.</p>
             <p class="at">oxhack</p></div>
@@ -301,8 +301,8 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
         </li>
         <li data-parts="python argon">
           <a class="card" href="https://github.com/owenbonc/scaffld" rel="noopener">
-            <div class="pic"><img src="img/roboteacher.jpg" alt="A simulated humanoid robot placing an orange box into a green bin" loading="lazy" width="640" height="480"></div>
-            <div class="txt"><h3>roboteacher <span class="arr" aria-hidden="true">&#8599;</span></h3>
+            <div class="pic"><video src="img/scaffld.mp4" poster="img/scaffld.jpg" autoplay muted loop playsinline preload="metadata" width="640" height="480" aria-label="The student robot alone in simulation: it lifts the box, the bin is moved, and it still puts the box in"></video></div>
+            <div class="txt"><h3>scaffld <span class="arr" aria-hidden="true">&#8599;</span></h3>
             <p data-es="un agente que le enseña a un robot una habilidad nueva a partir de una sola frase; luego un modelo pequeño la ejecuta solo en una laptop.">an agent that teaches a robot a new skill from one sentence, then a small model runs it alone on a laptop.</p>
             <p class="at" data-es="agentverse en la ucl, categoría robótica">agentverse at ucl, robotics track</p></div>
           </a>
@@ -782,6 +782,12 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
   langBtn.addEventListener('click', function(){ setLang(document.documentElement.lang === 'es' ? 'en' : 'es', true); });
   var saved = null; try { saved = localStorage.getItem('lang'); } catch (e) {}
   if (saved === 'es') setLang('es', false);
+
+  /* ---------- project videos: loop like gifs, only while on screen, and not at all with reduced motion ---------- */
+  [].slice.call(document.querySelectorAll('.proj video')).forEach(function(v){
+    if (reduce){ v.removeAttribute('autoplay'); v.pause(); return; }
+    if ('IntersectionObserver' in window) new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) v.play().catch(function(){}); else v.pause(); }); }).observe(v);
+  });
 
   /* ---------- builds <-> parts cross-highlighting ---------- */
   var proj = document.getElementById('proj'), bin = document.getElementById('bin');
