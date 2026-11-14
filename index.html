@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Santiago Alvarez</title>
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="180x180">
+<link rel="apple-touch-icon" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -39,6 +42,8 @@ a{color:inherit}
 @media (min-aspect-ratio:1/1){.art{right:16vw}}
 body:not([data-view="home"]) .art{opacity:.14}
 @media (max-aspect-ratio:1/1){.art{height:auto;width:100%;-webkit-mask-image:linear-gradient(180deg,transparent,#000 22%);mask-image:linear-gradient(180deg,transparent,#000 22%)}}
+/* when the wave is shrunk to stay clear of the text, the fade would also cut off the parts that carry it to the screen edges */
+.art.fit{-webkit-mask-image:none;mask-image:none}
 .page{position:relative;z-index:1;max-width:1120px;min-height:100%;margin:0 auto;padding:0 clamp(18px,5vw,48px) 40px;display:flex;flex-direction:column;gap:clamp(20px,4vh,40px)}
 html,body{height:100%}
 main{flex:1}
@@ -68,7 +73,10 @@ main{transition:opacity 220ms ease}
 
 /* hero */
 .view.hero{gap:0;padding-top:clamp(8px,4vh,48px)}
-h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(28px,4.6vw,50px);line-height:1.15;letter-spacing:-.025em;min-height:1.15em;animation:rise 700ms var(--ease-out) both}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(22px,3.3vw,38px);line-height:1.2;letter-spacing:-.02em;min-height:1.2em;animation:rise 700ms var(--ease-out) both}
+/* the greeting is a line of c: printf("...") in the code font, the words in the heading font */
+h1 .code{font-family:var(--mono);font-weight:500;letter-spacing:0;color:var(--muted)}
+h1 .str{color:var(--pulse)}
 /* the caret that types the greeting, like a terminal */
 h1 .caret{display:inline-block;width:.09em;height:1em;margin-left:.06em;vertical-align:-.12em;background:var(--ink);animation:blink 1s steps(1) infinite}
 h1.typing .caret{animation:none}
@@ -79,6 +87,8 @@ h1.typing .caret{animation:none}
 .clocks i{font-style:normal;opacity:.7}
 .lede{margin:18px 0 0;max-width:30ch;font-size:clamp(20px,2.4vw,26px);line-height:1.3;font-weight:500;animation:rise 700ms var(--ease-out) 140ms both}
 .lede em{font-style:normal;color:var(--pulse)}
+/* the disclaimer under the greeting, written as a code comment */
+.lede.joke{max-width:none;font-size:clamp(15px,1.5vw,18px);font-weight:400;color:var(--muted);margin-top:12px}
 .where{margin:10px 0 0;color:var(--muted);font-weight:500;max-width:44ch;animation:rise 700ms var(--ease-out) 200ms both}
 .links{display:flex;flex-wrap:wrap;gap:4px 22px;margin-top:10px}
 .hero .links{animation:rise 700ms var(--ease-out) 260ms both}
@@ -233,8 +243,8 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
 
   <main>
   <section class="view hero" id="view-home" data-view="home">
-    <h1 aria-label="santiago alvarez"><span class="type" id="type" aria-hidden="true">hello world! i'm santiago alvarez.</span><span class="caret" aria-hidden="true"></span></h1>
-    <p class="lede" data-es="conecto cosas y luego les enseño a &lt;em&gt;pensar&lt;/em&gt;.">i wire things up, then teach them to <em>think</em>.</p>
+    <h1 aria-label="santiago alvarez"><span class="code" aria-hidden="true"><span class="str" id="type-a">hello world!</span>(printf);</span> <span class="type" id="type-b" aria-hidden="true">i'm santiago alvarez.</span><span class="caret" id="caret" aria-hidden="true"></span></h1>
+    <p class="lede joke" data-es="// sí sé programar btw, es broma">//i know how to code btw, just jk</p>
     <p class="where" data-es="estudiante de ingeniería eléctrica y electrónica / construyo con ia">electrical &amp; electronic engineering student / ai builder</p>
     <div class="links">
       <a class="ico" href="https://github.com/santiagoalvarezv" rel="me noopener" aria-label="GitHub" title="GitHub"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/github.svg" alt="" width="26" height="26" onerror="this.replaceWith(document.createTextNode('github'))"></a>
@@ -371,7 +381,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       <li><img src="img/rest/cat-sitting.jpg" alt="My cat sitting up, looking straight at the camera" loading="lazy" width="755" height="1400"><em data-es="el amor de mi vida">the love of my life</em></li>
       <li><img src="img/rest/forrest-gump.jpg" alt="Forrest Gump poster: Forrest on a bench with his suitcase" loading="lazy" width="500" height="750"><em data-es="película favorita">favourite film</em></li>
       <li class="sq song"><button type="button" data-yt="3Z7LDbbC3qc" data-start="123" data-end="162" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/17/af/4f/17af4f54-993d-b209-8bc7-46ea888f1280/mzaf_1848130934536833127.plus.aac.p.m4a" aria-label="Play a part of LIMBO by keshi"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/e2/de/98/e2de9860-b40b-e33f-f68e-ab8e0956a538/22UMGIM07345.rgb.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>limbo, keshi</em></li>
-      <li><img src="img/rest/machu-picchu.jpg" alt="Me as a small kid at Machu Picchu, Huayna Picchu behind me" loading="lazy" width="716" height="1024"><em data-es="machu picchu, yo chiquito">machu picchu, very small me</em></li>
+      <li><img src="img/rest/machu-picchu.jpg" alt="Me as a small kid at Machu Picchu, Huayna Picchu behind me" loading="lazy" width="716" height="1024"><em data-es="machu picchu, yo chiquito">machu picchu!</em></li>
       <li><img src="img/rest/paris-2024.jpg" alt="Tennis at Roland Garros during the Paris 2024 Olympics, the crowd on its feet" loading="lazy" width="900" height="1200"><em>paris 2024</em></li>
       <li class="sq song"><button type="button" data-yt="2tQVGWh04fc" data-start="0" data-end="45" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/93/34/3d/93343d81-7f22-b560-b03b-4483b4cf68e9/mzaf_10675513524040284726.plus.aac.p.m4a" aria-label="Play a part of Cómo pasa el tiempo by El Cuarteto de Nos"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f2/ee/b2/f2eeb2ec-1a06-f98a-9749-e8ed97475868/825646211937.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>cómo pasa el tiempo, el cuarteto de nos</em></li>
       <li><img src="img/rest/wing.jpg" alt="A plane wing at sunset above the clouds" loading="lazy" width="900" height="1200"><em data-es="yo cada vez que vuelvo a casa">Me everytime I go back home</em></li>
@@ -476,7 +486,36 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
     if (reduce || !mask || document.body.dataset.view !== 'home' || e.target.closest('a,button')) return;
     var p = toMask(e); near(p[0], p[1], 60, 16);
   }, { passive: true });
-  function build(){ try { read(); buildExt(); } catch (err) { mask = null; } }
+  /* keep the wave clear of the words on the home page, whatever shape the window is:
+     measure where the text ends (the greeting at its longest), and if the wave would reach it, shrink the wave to the space below */
+  function textBox(){
+    var hero = document.getElementById('view-home'), box = { right: 0, bottom: 0 };
+    [].slice.call(hero.children).forEach(function(el){
+      var target = el;
+      if (el.tagName === 'H1'){ /* the greeting is typing: measure a copy that holds the longest version */
+        target = el.cloneNode(true); target.style.cssText = 'position:absolute;visibility:hidden;left:' + el.getBoundingClientRect().left + 'px;top:' + (el.getBoundingClientRect().top + scrollY) + 'px;width:' + el.offsetWidth + 'px';
+        var a = target.querySelector('#type-a'), b = target.querySelector('#type-b'), c = target.querySelector('#caret');
+        if (a) a.textContent = '¡hola mundo!'; if (b) b.textContent = "i'm santiago alvarez."; if (c && a) a.parentNode.insertBefore(c, a.nextSibling);
+        [].slice.call(target.querySelectorAll('[id]')).forEach(function(n){ n.removeAttribute('id'); });
+        document.body.appendChild(target);
+      }
+      var rg = document.createRange(); rg.selectNodeContents(target); var r = rg.getBoundingClientRect();
+      box.right = Math.max(box.right, r.right); box.bottom = Math.max(box.bottom, r.bottom);
+      if (target !== el) target.remove();
+    });
+    return box;
+  }
+  function fitArt(){
+    if (document.getElementById('view-home').hidden) return;
+    art.style.height = ''; art.style.width = ''; art.classList.remove('fit');
+    /* the top 30% of the picture is empty sky: only the wave below it has to stay clear of the text */
+    var SKY = .3, r = art.getBoundingClientRect(), t = textBox(), gap = 28;
+    if (r.top + r.height * SKY < t.bottom + gap && r.left < t.right + gap){
+      art.style.height = Math.max(160, (innerHeight - t.bottom - gap) / (1 - SKY)) + 'px';
+      art.style.width = 'auto'; art.classList.add('fit');
+    }
+  }
+  function build(){ try { fitArt(); read(); buildExt(); } catch (err) { mask = null; } }
 
   /* ---------- continuing the illustration past both edges: every band and trace that reaches an edge carries on ---------- */
   function makeSide(left){
@@ -670,7 +709,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
   }
   function buildExt(){ buildHaze(); sides.forEach(function(s){ s.build(); }); }
   function extFrame(dt){ sides.forEach(function(s){ s.tick(dt); }); }
-  var rz; window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ if (mask) buildExt(); }, 150); });
+  var rz; window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ fitArt(); if (mask) buildExt(); }, 150); });
 
   /* ---------- views: home, projects, about, personal ---------- */
   var views = [].slice.call(document.querySelectorAll('.view')), navs = [].slice.call(document.querySelectorAll('[data-nav]'));
@@ -683,24 +722,33 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
     window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route); route();
+  /* re-fit the wave when coming back home, when the fonts arrive, or when the language changes the text width */
+  function refit(){ fitArt(); if (mask) buildExt(); }
+  window.addEventListener('hashchange', function(){ if (document.body.dataset.view === 'home') refit(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
 
-  /* ---------- the greeting types itself, english then spanish, then starts over ---------- */
-  var typeEl = document.getElementById('type'), h1 = typeEl.parentNode;
-  var greet = { en: "hello world! i'm santiago alvarez.", es: "¡hola mundo! soy santiago alvarez." };
+  /* ---------- the greeting types itself: first the string inside printf("..."), then the words after it.
+     english, then spanish, then over again ---------- */
+  var typeA = document.getElementById('type-a'), typeB = document.getElementById('type-b'), caret = document.getElementById('caret'), h1 = caret.parentNode;
+  var greet = { en: ['hello world!', "i'm santiago alvarez."], es: ['¡hola mundo!', 'soy santiago alvarez.'] };
+  function caretAfter(el){ el.parentNode.insertBefore(caret, el.nextSibling); }
   if (!reduce) (function(){
-    var order = document.documentElement.lang === 'es' ? ['es', 'en'] : ['en', 'es'], k = 0, i = 0, del = false;
-    typeEl.textContent = '';
+    var order = document.documentElement.lang === 'es' ? ['es', 'en'] : ['en', 'es'], k = 0, part = 0, i = 0, del = false;
+    var els = [typeA, typeB];
+    typeA.textContent = ''; typeB.textContent = ''; caretAfter(typeA);
     function step(){
-      var text = greet[order[k % 2]];
+      var words = greet[order[k % 2]], el = els[part], text = words[part];
       h1.classList.add('typing');
       if (!del){
-        i++; typeEl.textContent = text.slice(0, i);
-        if (i === text.length){ del = true; h1.classList.remove('typing'); return setTimeout(step, 2600); }
-        return setTimeout(step, 55 + Math.random() * 60);
+        i++; el.textContent = text.slice(0, i);
+        if (i < text.length) return setTimeout(step, 55 + Math.random() * 60);
+        if (part === 0){ part = 1; i = 0; caretAfter(typeB); return setTimeout(step, 380); }
+        del = true; h1.classList.remove('typing'); return setTimeout(step, 2600);
       }
-      i--; typeEl.textContent = text.slice(0, i);
-      if (i === 0){ del = false; k++; h1.classList.remove('typing'); return setTimeout(step, 450); }
-      setTimeout(step, 28);
+      i--; el.textContent = text.slice(0, i);
+      if (i > 0) return setTimeout(step, 28);
+      if (part === 1){ part = 0; i = words[0].length; caretAfter(typeA); return setTimeout(step, 120); }
+      del = false; k++; h1.classList.remove('typing'); return setTimeout(step, 450);
     }
     setTimeout(step, 500);
   })();
@@ -727,9 +775,9 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       langBtn.setAttribute('aria-label', l === 'es' ? 'View in English' : 'Ver en español');
       try { localStorage.setItem('lang', l); } catch (e) {}
     }
-    if (!fade || reduce) { apply(); return; }
+    if (!fade || reduce) { apply(); refit(); return; }
     mainEl.classList.add('swap');
-    setTimeout(function(){ apply(); mainEl.classList.remove('swap'); }, 140);
+    setTimeout(function(){ apply(); mainEl.classList.remove('swap'); refit(); }, 140);
   }
   langBtn.addEventListener('click', function(){ setLang(document.documentElement.lang === 'es' ? 'en' : 'es', true); });
   var saved = null; try { saved = localStorage.getItem('lang'); } catch (e) {}
