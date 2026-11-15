@@ -117,11 +117,15 @@ h1.typing .caret{animation:none}
 .about{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px clamp(56px,9vw,120px);align-items:start}
 .formal{margin:0 0 14px;max-width:60ch;font-size:18px}
 .intro{margin:0;max-width:56ch;font-size:clamp(18px,1.6vw,20px);line-height:1.55}
-/* the wall: covers of different shapes stacked in columns, like a pinboard */
+/* the wall: photos keep their own shape, in columns like a pinboard. a script shares them out so the columns
+   end level (layoutWall); without it they simply stack */
 .wall{list-style:none;margin:0;padding:0;columns:4 140px;column-gap:clamp(10px,1.4vw,16px)}
-.wall li{break-inside:avoid;margin:0 0 16px;border-radius:4px;overflow:hidden;background:rgba(21,40,74,.06);box-shadow:0 1px 2px rgba(21,40,74,.14),0 8px 20px -12px rgba(21,40,74,.4);transition:transform 260ms var(--ease-out),box-shadow 260ms var(--ease-out)}
+.wall li{break-inside:avoid;margin:0 0 16px}
 .wall li.sq{aspect-ratio:1}
-.wall li.tall{aspect-ratio:2/3}
+.wall.laid{columns:auto;position:relative}
+.wall.laid li{position:absolute;margin:0}
+.wall.laid li img{height:100%;object-fit:cover}
+.wall li{border-radius:4px;overflow:hidden;background:rgba(21,40,74,.06);box-shadow:0 1px 2px rgba(21,40,74,.14),0 8px 20px -12px rgba(21,40,74,.4);transition:transform 260ms var(--ease-out),box-shadow 260ms var(--ease-out)}
 .wall li{position:relative}
 .wall img{width:100%;height:auto;display:block}
 .wall li.sq img,.wall li.tall img{height:100%;object-fit:cover}
@@ -385,7 +389,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
     </div>
     <!-- the wall: one <li> per thing. photos keep their own shape:
          <li><img src="img/rest/name.jpg" alt="what it is"><em>caption</em></li>
-         placeholders: class "sq" = square (songs), "tall" = poster -->
+         songs are class "sq song". the script spreads everything over the columns so they end level -->
     <ul class="wall">
       <li><img src="img/rest/cat-sitting.jpg" alt="My cat sitting up, looking straight at the camera" loading="lazy" width="755" height="1400"><em data-es="el amor de mi vida">the love of my life</em></li>
       <li><img src="img/rest/forrest-gump.jpg" alt="Forrest Gump poster: Forrest on a bench with his suitcase" loading="lazy" width="500" height="750"><em data-es="película favorita">favourite film</em></li>
@@ -393,9 +397,12 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       <li><img src="img/rest/machu-picchu.jpg" alt="Me as a small kid at Machu Picchu, Huayna Picchu behind me" loading="lazy" width="716" height="1024"><em data-es="machu picchu, yo chiquito">machu picchu!</em></li>
       <li><img src="img/rest/paris-2024.jpg" alt="Tennis at Roland Garros during the Paris 2024 Olympics, the crowd on its feet" loading="lazy" width="900" height="1200"><em>paris 2024</em></li>
       <li><img src="img/rest/chicago.jpg" alt="The Chicago River between skyscrapers, a yellow water taxi and a sightseeing boat" loading="lazy" width="800" height="1067"><em data-es="¡mi ciudad favorita!">my favourite city!</em></li>
+      <li><img src="img/rest/curry.jpg" alt="Stephen Curry sitting with the NBA championship and Finals MVP trophies, 2022" loading="lazy" width="736" height="920" style="object-position:50% 20%"><em>my goat</em></li>
       <li class="sq song"><button type="button" data-yt="2tQVGWh04fc" data-start="0" data-end="45" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/93/34/3d/93343d81-7f22-b560-b03b-4483b4cf68e9/mzaf_10675513524040284726.plus.aac.p.m4a" aria-label="Play a part of Cómo pasa el tiempo by El Cuarteto de Nos"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f2/ee/b2/f2eeb2ec-1a06-f98a-9749-e8ed97475868/825646211937.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>cómo pasa el tiempo, el cuarteto de nos</em></li>
       <li><img src="img/rest/wing.jpg" alt="A plane wing at sunset above the clouds" loading="lazy" width="900" height="1200"><em data-es="yo cada vez que vuelvo a casa">Me everytime I go back home</em></li>
       <li><img src="img/rest/miss-peru.jpg" alt="An old phone screen reading: some days, I miss Peru like it was a person, with pixel art of the flag, Rainbow Mountain, Machu Picchu and a llama" loading="lazy" width="800" height="988"><em>pe causa</em></li>
+      <li><img src="img/rest/lomo-saltado.jpg" alt="A plate of lomo saltado: beef, onion, tomato and chips with a dome of white rice, chicha morada behind" loading="lazy" width="900" height="1200"><em data-es="¿fish and chips? ¿y eso qué es?">fish and chips? what's that?</em></li>
+      <li class="sq song"><button type="button" data-yt="qp2wOrHHLo8" data-start="30" data-end="275" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c1/4f/24/c14f24fb-b08a-6f30-ae9d-6e9ee6df367c/mzaf_8556579710511332330.plus.aac.p.m4a" aria-label="Play a part of Life Is a Highway by Rascal Flatts, from Cars"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/eb/f3/00/ebf300a7-22ab-9f61-29ef-9c86acc889b3/16DMGIM07683.rgb.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em data-es="life is a highway, rascal flatts. un temazo">life is a highway, rascal flatts. an absolute banger</em></li>
       <li class="sq song"><button type="button" data-yt="tFXnN6Onrbg" data-start="70" data-end="120" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/9d/33/089d3339-b1c2-8554-592b-cc1e10f1d587/mzaf_16539312582166798587.plus.aac.p.m4a" aria-label="Play a part of BABY I'M BACK by The Kid LAROI"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/93/2b/87/932b8783-6114-4328-6b18-d56aa7614c0b/196874338308.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>baby i'm back, the kid laroi</em></li>
       <li><img src="img/rest/cat-yawn.jpg" alt="My cat lying on the bed, mid-yawn" loading="lazy" width="900" height="1200"><em data-es="ella otra vez">her again</em></li>
       <li class="sq song"><button type="button" data-yt="_t88D1ygVMU" data-start="26" data-end="254" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/96/c4/8d/96c48dab-5a8f-ecb9-0385-7c6724ddd663/mzaf_5827516530338918168.plus.aac.p.m4a" aria-label="Play a part of Cuando pienses en volver by Pedro Suárez-Vértiz"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/31/ec/e2/31ece2a7-c988-0892-5efa-a58ae9d97895/7751546000322.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em data-es="cuando pienses en volver, pedro suárez-vértiz. mi vida en una canción">cuando pienses en volver, pedro suárez-vértiz. my life in one song</em></li>
@@ -853,6 +860,54 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
     function drop(){ if (!p.classList.contains('drag')) return; p.classList.remove('drag'); p.style.transform = ''; light(null); }
     p.addEventListener('pointerup', drop); p.addEventListener('pointercancel', drop);
   });
+
+  /* ---------- the wall ends level: every photo keeps its shape and size; the photos are shared out over the
+     columns so their heights come out (almost) equal, and the last few pixels are trimmed evenly across a column ---------- */
+  var wall = document.querySelector('.wall');
+  function layoutWall(){
+    if (!wall) return;
+    wall.classList.remove('laid'); wall.style.height = '';
+    var W = wall.clientWidth; if (!W) return;
+    var lis = [].slice.call(wall.children), cols = W < 520 ? 2 : 4, gap = W < 520 ? 10 : Math.max(10, Math.min(16, innerWidth * .014));
+    var cw = (W - (cols - 1) * gap) / cols, nSongs = wall.querySelectorAll('.song').length;
+    var r = lis.map(function(li){ var im = li.querySelector('img'); return li.classList.contains('sq') ? 1 : (+im.getAttribute('height') / +im.getAttribute('width')) || 1; });
+    function heights(of){ var h = [], n = []; for (var c = 0; c < cols; c++){ h[c] = 0; n[c] = 0; } of.forEach(function(c, i){ h[c] += r[i] * cw; n[c]++; }); return h.map(function(x, c){ return x + Math.max(0, n[c] - 1) * gap; }); }
+    function cost(of){ var h = heights(of), songs = []; for (var c = 0; c < cols; c++) songs[c] = 0;
+      of.forEach(function(c, i){ if (lis[i].classList.contains('song')) songs[c]++; });
+      var spread = Math.max.apply(null, h) - Math.min.apply(null, h), clump = 0;
+      /* covers spread evenly over the columns, and never one right on top of another */
+      var lim = Math.max(2, Math.ceil(nSongs / cols));
+      songs.forEach(function(s){ if (s > lim) clump += (s - lim) * 1e4; });
+      var last = []; of.forEach(function(c, i){ var sg = lis[i].classList.contains('song'); if (sg && last[c]) clump += 60; last[c] = sg; });
+      return spread + clump; }
+    /* start round-robin in page order, then keep moving or swapping single photos while it gets more level */
+    /* a few fixed starting points (same result every visit), keep the most level one */
+    var of = null, best = Infinity;
+    for (var s = 1; s <= 24; s++){
+      var tr = r.map(function(_, i){ return (i * s + (s >> 2)) % cols; }), b = cost(tr), better = true;
+      while (better){ better = false;
+        for (var i = 0; i < tr.length; i++){
+          for (var c = 0; c < cols; c++){ if (c === tr[i]) continue; var o = tr[i]; tr[i] = c; var k = cost(tr); if (k < b - .01){ b = k; better = true; } else tr[i] = o; }
+          for (var j = i + 1; j < tr.length; j++){ if (tr[i] === tr[j]) continue; var t = tr[i]; tr[i] = tr[j]; tr[j] = t; var k2 = cost(tr); if (k2 < b - .01){ b = k2; better = true; } else { tr[j] = tr[i]; tr[i] = t; } }
+        }
+      }
+      if (b < best){ best = b; of = tr; }
+    }
+    var h = heights(of), T = h.reduce(function(a, b){ return a + b; }, 0) / cols, top = [];
+    for (var c = 0; c < cols; c++) top[c] = 0;
+    wall.classList.add('laid');
+    lis.forEach(function(li, i){
+      var c = of[i], n = of.filter(function(x){ return x === c; }).length, sum = 0;
+      of.forEach(function(x, m){ if (x === c) sum += r[m]; });
+      var k = (T - (n - 1) * gap) / (sum * cw), hh = r[i] * cw * k;
+      li.style.left = c * (cw + gap) + 'px'; li.style.top = top[c] + 'px'; li.style.width = cw + 'px'; li.style.height = hh + 'px';
+      top[c] += hh + gap;
+    });
+    wall.style.height = T + 'px';
+  }
+  layoutWall();
+  var wz; window.addEventListener('resize', function(){ clearTimeout(wz); wz = setTimeout(layoutWall, 120); });
+  window.addEventListener('hashchange', function(){ setTimeout(layoutWall, 0); });
 
   /* ---------- songs on the wall: click a cover, a part of the song plays ----------
      each song button can carry:
