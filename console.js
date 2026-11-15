@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js';
+import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js?v=4';
 
 /* ---------- sizes (mm), roughly a big-screen clamshell handheld ---------- */
 const W = 156, D = 93;          /* width and depth of each half */
@@ -30,7 +30,7 @@ if (!EMBED) scene.background = new THREE.Color(0xe7e5e0);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-const camera = new THREE.PerspectiveCamera(28, 1, 1, 4000);
+const camera = new THREE.PerspectiveCamera(28, 1, 40, 3000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.enablePan = false;
@@ -362,7 +362,7 @@ function screen(wmm, hmm, kind){
   const tex = canvasTex(Math.round(wmm * px), Math.round(hmm * px), (g, w, h) => painters[kind](g, w, h));
   const lcd = new THREE.Mesh(new THREE.PlaneGeometry(wmm, hmm), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(wmm, hmm), M.glass);
-  glass.position.z = 0.05; glass.raycast = () => {};   /* clicks go through the glass to the screen */
+  glass.position.z = 0.12; glass.raycast = () => {};   /* clicks go through the glass to the screen */
   grp.add(lcd, glass);
   lcd.userData.kind = kind;
   screens[kind] = { tex, lcd };
@@ -393,7 +393,7 @@ scene.add(bottom);
 
   /* touch screen in a gloss-black frame */
   B.add(at(slab(89, 67.5, 2.6, 0.6, 0.2, M.gloss), 0, -45.5, Z));
-  B.add(at(screen(84, 63, 'bottom'), 0, -45.5, Z + 0.62));
+  B.add(at(screen(84, 63, 'bottom'), 0, -45.5, Z + 0.95));
 
   /* select / home / start strip under the screen */
   B.add(at(slab(82, 6.6, 2.2, 0.5, 0.15, M.ring), 0, -86.3, Z));
@@ -485,7 +485,7 @@ hinge.add(top);
   /* the big screen in its gloss frame */
   const sy = 50;
   T.add(at(slab(114, 73, 3, 0.6, 0.2, M.gloss), 0, sy, Z));
-  T.add(at(screen(106.5, 64, 'top'), 0, sy, Z + 0.62));
+  T.add(at(screen(106.5, 64, 'top'), 0, sy, Z + 0.95));
 
   /* inner camera and the two little sensors either side */
   T.add(at(disc(2.4, 0.6, M.ring), 0, 89.5, Z + 0.2));
@@ -831,7 +831,7 @@ function layoutSheet(){
     $('s-title').textContent = T('Welcome', 'Bienvenido');
     $('s-sub').textContent = a ? T('Sign in to keep your points.', 'Inicia sesión para guardar tus puntos.') : T('Pick a name and a password. Your points add up every game.', 'Elige un nombre y una contraseña. Tus puntos se suman en cada juego.');
     $('tab-a').textContent = T('Log in', 'Entrar'); $('tab-b').textContent = T('Create account', 'Crear cuenta');
-    show('f-name', true); show('f-old', false); show('f-pass', true); show('f-rep', !a);
+    show('f-name', true); $('f-name').firstChild.textContent = T('Name', 'Nombre'); show('f-old', false); show('f-pass', true); show('f-rep', !a);
     $('f-pass').firstChild.textContent = T('Password', 'Contraseña'); $('f-rep').firstChild.textContent = T('Repeat password', 'Repite la contraseña');
     form.pass.autocomplete = a ? 'current-password' : 'new-password';
     $('s-go').textContent = a ? T('Log in', 'Entrar') : T('Create account', 'Crear cuenta');
