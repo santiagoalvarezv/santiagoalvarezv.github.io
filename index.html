@@ -51,6 +51,7 @@ body:has(#bots.on) .art{opacity:0}
 .art.fit{-webkit-mask-image:none;mask-image:none}
 .page{position:relative;z-index:1;max-width:1120px;min-height:100%;margin:0 auto;padding:0 clamp(18px,5vw,48px) 40px;display:flex;flex-direction:column;gap:clamp(20px,4vh,40px)}
 html,body{height:100%}
+html{overflow-x:clip}
 main{flex:1}
 .view{display:flex;flex-direction:column;gap:clamp(48px,8vw,88px);animation:rise 420ms var(--ease-out) both}
 .view[hidden]{display:none}
@@ -80,7 +81,7 @@ main{transition:opacity 220ms ease}
 .view.hero{gap:0;padding-top:clamp(8px,4vh,48px)}
 h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(22px,3.3vw,38px);line-height:1.2;letter-spacing:-.02em;min-height:1.2em;animation:rise 700ms var(--ease-out) both}
 /* the greeting is a line of c: printf("...") in the code font, the words in the heading font */
-h1 .code{font-family:var(--mono);font-weight:500;letter-spacing:0;color:var(--muted)}
+h1 .code{overflow-wrap:anywhere;font-family:var(--mono);font-weight:500;letter-spacing:0;color:var(--muted)}
 h1 .str{color:var(--pulse)}
 /* the caret that types the greeting, like a terminal */
 h1 .caret{display:inline-block;width:.09em;height:1em;margin-left:.06em;vertical-align:-.12em;background:var(--ink);animation:blink 1s steps(1) infinite}
@@ -275,7 +276,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
         </li>
         <li data-parts="python argon">
           <a class="card" href="https://github.com/owenbonc/scaffld" rel="noopener">
-            <div class="pic"><video src="img/scaffld.mp4" poster="img/scaffld.jpg" autoplay muted loop playsinline preload="metadata" width="640" height="480" aria-label="The student robot alone in simulation: it lifts the box, the bin is moved, and it still puts the box in"></video></div>
+            <div class="pic"><video src="img/scaffld.mp4" poster="img/scaffld.jpg" muted loop playsinline webkit-playsinline preload="metadata" width="640" height="480" aria-label="The student robot alone in simulation: it lifts the box, the bin is moved, and it still puts the box in"></video></div>
             <div class="txt"><h3>scaffld <span class="arr" aria-hidden="true">&#8599;</span></h3>
             <p data-es="un agente que le enseña a un robot una habilidad nueva a partir de una sola frase; luego un modelo pequeño la ejecuta solo en una laptop.">an agent that teaches a robot a new skill from one sentence, then a small model runs it alone on a laptop.</p>
             <p class="at" data-es="agentverse en la ucl, categoría robótica">agentverse at ucl, robotics track</p></div>
@@ -291,7 +292,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
         </li>
         <li data-parts="gemini elevenlabs snowflake">
           <a class="card" href="https://devpost.com/software/roadworks-ai" rel="noopener">
-            <div class="pic"><video src="img/roadwork-ai.mp4" poster="img/roadwork-ai.jpg" autoplay muted loop playsinline preload="metadata" width="720" height="540" aria-label="3D map of Paseo de la Castellana: traffic columns shrink and turn green when the works move from 09:00 to 21:00"></video></div>
+            <div class="pic"><video src="img/roadwork-ai.mp4" poster="img/roadwork-ai.jpg" muted loop playsinline webkit-playsinline preload="metadata" width="720" height="540" aria-label="3D map of Paseo de la Castellana: traffic columns shrink and turn green when the works move from 09:00 to 21:00"></video></div>
             <div class="txt"><h3>roadwork ai <span class="arr" aria-hidden="true">&#8599;</span></h3>
             <p data-es="eliges una calle y te dice el momento que menos molesta para abrirla, con una asistente de voz llamada aura.">pick a road and it tells you the least disruptive moment to dig it up, with a voice assistant called aura.</p>
             <p class="at">oxhack</p></div>
@@ -506,6 +507,12 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
         if (a) a.textContent = '¡hola mundo!'; if (b) b.textContent = "i'm santiago alvarez."; if (c && a) a.parentNode.insertBefore(c, a.nextSibling);
         [].slice.call(target.querySelectorAll('[id]')).forEach(function(n){ n.removeAttribute('id'); });
         document.body.appendChild(target);
+        /* keep the greeting's box at its tallest, so typing and erasing never push the page up and down */
+        var hMax = target.offsetHeight;
+        if (a) a.textContent = 'hello world!'; if (b) b.textContent = 'soy santiago alvarez.';
+        hMax = Math.max(hMax, target.offsetHeight);
+        if (b) b.textContent = "i'm santiago alvarez.";
+        el.style.minHeight = hMax + 'px';
       }
       var rg = document.createRange(); rg.selectNodeContents(target); var r = rg.getBoundingClientRect();
       box.right = Math.max(box.right, r.right); box.bottom = Math.max(box.bottom, r.bottom);
@@ -792,9 +799,19 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
   if (saved === 'es') setLang('es', false);
 
   /* ---------- project videos: loop like gifs, only while on screen, and not at all with reduced motion ---------- */
+  /* in-app browsers (tiktok, instagram, facebook...) open any playing video full screen, even muted and inline,
+     so there the loops become animated webp pictures and songs use the plain audio preview instead of youtube */
+  var inApp = /TikTok|musical_ly|Bytedance|Instagram|FBAN|FBAV|FB_IAB|Line\/|Snapchat|Twitter/i.test(navigator.userAgent);
   [].slice.call(document.querySelectorAll('.proj video')).forEach(function(v){
-    if (reduce){ v.removeAttribute('autoplay'); v.pause(); return; }
+    if (inApp){
+      var im = document.createElement('img');
+      im.src = reduce ? v.poster : v.getAttribute('src').replace(/\.mp4$/, '.webp');
+      im.alt = v.getAttribute('aria-label') || ''; im.width = v.width; im.height = v.height; im.loading = 'lazy';
+      v.parentNode.replaceChild(im, v); return;
+    }
+    if (reduce) return;
     if ('IntersectionObserver' in window) new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) v.play().catch(function(){}); else v.pause(); }); }).observe(v);
+    else { v.autoplay = true; v.play().catch(function(){}); }
   });
 
   /* ---------- builds <-> parts cross-highlighting ---------- */
@@ -809,12 +826,16 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
     });
     parts.forEach(function(p){ p.classList.toggle('on', !!any && keys.indexOf(p.dataset.part) > -1); });
   }
+  /* only a real mouse highlights on hover: on a phone a finger "enters" a card while scrolling and never leaves,
+     which left the other cards faded */
   rows.forEach(function(r){
-    r.addEventListener('pointerenter', function(){ light(r.dataset.parts.split(' '), r); });
-    r.addEventListener('pointerleave', function(){ light(null); });
+    r.addEventListener('pointerenter', function(e){ if (e.pointerType === 'mouse') light(r.dataset.parts.split(' '), r); });
+    r.addEventListener('pointerleave', function(e){ if (e.pointerType === 'mouse') light(null); });
   });
+  window.addEventListener('touchstart', function(){ if (!bin.querySelector('.drag')) light(null); }, { passive: true });
+  window.addEventListener('scroll', function(){ if (!bin.querySelector('.drag') && !matchMedia('(hover:hover)').matches) light(null); }, { passive: true });
   parts.forEach(function(p){
-    p.addEventListener('pointerenter', function(){ light([p.dataset.part]); });
+    p.addEventListener('pointerenter', function(e){ if (e.pointerType === 'mouse') light([p.dataset.part]); });
     p.addEventListener('pointerleave', function(){ if (!p.classList.contains('drag')) light(null); });
     /* pick a part up; it springs back when you let go */
     var sx0 = 0, sy0 = 0;
@@ -885,7 +906,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       if (current === b) { stop(); return; }
       stop();
       current = b; b.parentNode.classList.add('on');
-      if (b.dataset.audio || !b.dataset.yt || failed[b.dataset.yt]) playAudio(b, !b.dataset.audio);
+      if (b.dataset.audio || !b.dataset.yt || failed[b.dataset.yt] || (inApp && b.dataset.preview)) playAudio(b, !b.dataset.audio);
       else if (!ytReady) { current = null; b.parentNode.classList.remove('on'); pending = b; loadYT(); return; }
       else {
         mode = 'yt'; from = +b.dataset.start; to = +b.dataset.end;
