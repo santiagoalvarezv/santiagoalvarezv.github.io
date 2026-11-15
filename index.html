@@ -41,6 +41,11 @@ a{color:inherit}
 #extR,#extR-fx{position:absolute;left:calc(100% - 1px);top:0;height:100%;display:none}
 @media (min-aspect-ratio:1/1){.art{right:16vw}}
 body:not([data-view="home"]) .art{opacity:.14}
+/* the robots behind the projects page (bots.js); the faded wave steps aside for them */
+#bots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 600ms var(--ease-out)}
+#bots canvas{width:100%;height:100%;display:block}
+#bots.on{opacity:1}
+body:has(#bots.on) .art{opacity:0}
 @media (max-aspect-ratio:1/1){.art{height:auto;width:100%;-webkit-mask-image:linear-gradient(180deg,transparent,#000 22%);mask-image:linear-gradient(180deg,transparent,#000 22%)}}
 /* when the wave is shrunk to stay clear of the text, the fade would also cut off the parts that carry it to the screen edges */
 .art.fit{-webkit-mask-image:none;mask-image:none}
@@ -135,7 +140,12 @@ h1.typing .caret{animation:none}
 #yt{position:fixed;width:1px;height:1px;left:-10px;bottom:0;opacity:0;pointer-events:none}
 .wall li > span{display:grid;place-items:center;height:100%;border:1.5px dashed var(--hair);border-radius:4px;font:400 13px var(--mono);color:var(--muted)}
 .frame{aspect-ratio:4/5;border:1.5px dashed var(--muted);border-radius:6px;display:grid;place-items:center;text-align:center;padding:14px;color:var(--muted);font-size:14px;transform:rotate(2.5deg);transition:transform 300ms var(--ease-out)}
-.note{display:block;margin:14px 0 0 34%;font-family:var(--hand);font-size:26px;line-height:1;color:var(--pulse);transform:rotate(-5deg);white-space:nowrap}
+/* certificates: small framed prints, a title and who issued it */
+.certs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:22px}
+.certs a{display:flex;flex-direction:column;gap:4px;color:inherit;text-decoration:none}
+.certs img{width:100%;height:auto;aspect-ratio:1.414;object-fit:cover;object-position:left center;display:block;border:6px solid #fbf7ee;box-shadow:0 1px 2px rgba(21,40,74,.16),0 10px 22px -12px rgba(21,40,74,.4);margin-bottom:10px;transition:transform 260ms var(--ease-out)}
+.certs b{font-weight:500;font-size:15px}
+.certs span{font:400 12px var(--mono);color:var(--muted)}
 
 /* pulse */
 .pulse{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 18px;align-items:center;margin-top:22px;max-width:440px;animation:rise 700ms var(--ease-out) 320ms both}
@@ -182,18 +192,13 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
 .part.on{background:var(--ink);color:var(--ground)}
 .bin.dim .part:not(.on){opacity:.35}
 
-/* trail */
-.trail{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--hair)}
-.trail li{display:grid;grid-template-columns:minmax(92px,150px) minmax(0,1fr);gap:4px 24px;padding:14px 0;border-bottom:1px solid var(--hair)}
-.trail time{font:400 14px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;padding-top:3px}
-.trail b{font-weight:600}
-.trail span{color:var(--muted)}
 
 
 @media (hover:hover) and (pointer:fine){
   .nav a:hover{color:var(--ink)} .nav a:hover::after{transform:scaleX(1)}
   .lang:hover span{opacity:1}
   .draw:hover::after{opacity:1;animation:redraw 420ms var(--ease-out)}
+  .certs a:hover img{transform:translateY(-3px) rotate(-.6deg)}
   .pics:hover .ph.front{transform:rotate(0deg) translate(6%,2%)}
   .pics:hover .ph.back{transform:translate(-36%,-5%) rotate(-9deg) scale(.9)}
   .ico:hover{transform:translateY(-2px)}
@@ -226,6 +231,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
 <div class="photo-bg" aria-hidden="true"></div>
 <div class="art" id="art" aria-hidden="true"><img id="haze-src" src="haze.png" alt="" hidden><canvas id="haze"></canvas><canvas id="extL"></canvas><canvas id="extL-fx"></canvas><canvas id="extR"></canvas><canvas id="extR-fx"></canvas><img id="wave" src="wave3.png" alt=""><canvas id="board"></canvas></div>
 
+<div id="bots" aria-hidden="true"></div>
 <div class="page">
   <header>
     <nav class="nav" aria-label="Sections">
@@ -338,7 +344,7 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
     <div class="about">
       <div>
         <h2 class="sec" data-es="sobre mí">about</h2>
-        <p class="formal" data-es="Estudio Ingeniería Eléctrica y Electrónica en la Universidad de Nottingham (BEng, 2025 a 2028) y vivo en Londres.">I am an Electrical and Electronic Engineering student at the University of Nottingham (BEng, 2025 to 2028), based in London.</p>
+        <p class="formal" data-es="Estudio Ingeniería Eléctrica y Electrónica (BEng, 2025 a 2028) en la Universidad de Nottingham, la ciudad donde vivo.">I am an Electrical and Electronic Engineering student (BEng, 2025 to 2028) at the University of Nottingham, the city where I am based.</p>
         <p class="formal" data-es="Mi trabajo está donde el hardware se cruza con el machine learning: diseño y construyo la electrónica, y luego escribo los modelos que le dan sentido a lo que mide. Lo he hecho en proyectos de la universidad, en un programa de verano en Imperial College London y en equipos de hackathon.">My work sits where hardware meets machine learning: I design and build the electronics, then write the models that make sense of what they measure. I have done this in university projects, at a summer programme at Imperial College London, and in hackathon teams.</p>
         <p class="formal" data-es="Mi meta es una maestría en inteligencia artificial.">My goal is a master's degree in artificial intelligence.</p>
         <div class="links">
@@ -352,27 +358,29 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
           <img class="ph back" src="img/me-closeup.jpg" alt="Santiago up close, soldering iron in hand" width="800" height="1000">
           <img class="ph front" src="img/me-soldering.jpg" alt="Santiago bent over a board, soldering" width="800" height="1000">
         </div>
-        <span class="note" data-es="&#8598; ese soy yo">&#8598; that's me</span>
       </div>
     </div>
     <div>
-      <h2 class="sec" data-es="recorrido">trail</h2>
-      <p class="sub" data-es="estudios y por dónde he andado últimamente.">education and where i've been lately.</p>
-      <ol class="trail">
-        <li><time data-es="2025 a 2028">2025 to 2028</time><div><b>university of nottingham</b> <span data-es="beng ingeniería eléctrica y electrónica">beng electrical and electronic engineering</span></div></li>
-        <li><time>nov 2026</time><div><b>agentverse</b> <span data-es="hackathon de la ucl ai society, londres">ucl ai society hackathon, london</span></div></li>
-        <li><time>2026</time><div><b>oxhack</b> <span data-es="hice roadwork ai en unas 25 horas">built roadwork ai in about 25 hours</span></div></li>
-        <li><time data-es="verano 2026">summer 2026</time><div><b>imperial college london</b> <span data-es="programa de tres semanas en ia y sistemas industriales autónomos">three week programme in ai and autonomous industrial systems</span></div></li>
-        <li><time data-es="jun 2026">jun 2026</time><div><b>vivatech</b> <span>paris</span></div></li>
-      </ol>
+      <h2 class="sec" data-es="certificados">certificates</h2>
+      <p class="sub" data-es="cursos y eventos que terminé. haz clic en uno para ver el pdf.">courses and events i've completed. click one to see the pdf.</p>
+      <ul class="certs">
+        <li><a href="certs/qiskit-fall-fest-2026.pdf" target="_blank" rel="noopener">
+          <img src="certs/qiskit-fall-fest-2026.jpg" alt="IBM Qiskit Fall Fest 2026 certificate of participation" loading="lazy" width="1100" height="619">
+          <b>qiskit fall fest 2026</b><span>ibm quantum · oct 2026</span></a></li>
+        <li><a href="certs/ai-in-digital-health.pdf" target="_blank" rel="noopener">
+          <img src="certs/ai-in-digital-health.jpg" alt="UoN MedTech certificate for the AI in Digital Health Programming Course" loading="lazy" width="1100" height="778">
+          <b>ai in digital health programming</b><span>uon medtech</span></a></li>
+        <li><a href="certs/matlab-onramp.pdf" target="_blank" rel="noopener">
+          <img src="certs/matlab-onramp.jpg" alt="MathWorks MATLAB Onramp course completion certificate" loading="lazy" width="1100" height="778">
+          <b>matlab onramp</b><span>mathworks · jan 2026</span></a></li>
+      </ul>
     </div>
   </section>
 
   <section class="view" id="view-ayrton" data-view="ayrton" hidden>
     <div>
       <h2 class="sec" data-es="el resto de mí">the rest of me</h2>
-      <!-- write a few lines here -->
-      <p class="intro" data-es="aquí van unas líneas sobre mí.">a few lines about me go here.</p>
+      <p class="intro" data-es="además de ser ingeniero y apasionado por la ia y el machine learning, ¡también soy un ser humano!">besides being an engineer passionate about ai and machine learning, i'm also a human being!</p>
     </div>
     <!-- the wall: one <li> per thing. photos keep their own shape:
          <li><img src="img/rest/name.jpg" alt="what it is"><em>caption</em></li>
@@ -894,5 +902,6 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
   if (!reduce) requestAnimationFrame(frame);
 })();
 </script>
+<script type="module" src="bots.js"></script>
 </body>
 </html>
