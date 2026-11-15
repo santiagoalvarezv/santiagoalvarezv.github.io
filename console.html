@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Play · Santiago Alvarez</title>
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<style>
+  html,body{margin:0;height:100%;background:#e7e5e0;overflow:hidden}
+  #stage{position:fixed;inset:0}
+  #stage canvas{display:block;width:100%;height:100%;cursor:grab}
+  #stage canvas:active{cursor:grabbing}
+  .back{position:fixed;left:16px;top:14px;z-index:2;font:400 13px "Noto Sans Mono",ui-monospace,monospace;color:#5d5c58;text-decoration:none;padding:6px 2px}
+  .back:hover{color:#1d2433}
+  .back:focus-visible{outline:2px solid #5b8dff;border-radius:4px}
+  .hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);font:400 12px "Noto Sans Mono",ui-monospace,monospace;color:#7b7a76;letter-spacing:.02em;pointer-events:none;white-space:nowrap}
+
+  @media (max-width:600px){.hint{white-space:normal;width:calc(100% - 32px);text-align:center;line-height:1.5}}
+
+  /* the console's own dialogs: sign in, create an account, settings */
+  .sheet{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:rgba(30,34,44,.28);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:5;opacity:1;transition:opacity 200ms ease}
+  .sheet[hidden]{display:none}
+  .card{width:min(340px,100%);box-sizing:border-box;padding:22px 22px 16px;border-radius:22px;background:linear-gradient(#ffffff,#eef1f6);box-shadow:0 1px 0 #fff inset,0 18px 50px -12px rgba(20,30,60,.45),0 2px 6px rgba(20,30,60,.15);font:500 15px "Arial Rounded MT Bold","Nunito","Helvetica Neue",Arial,sans-serif;color:#1d2433;animation:pop 260ms cubic-bezier(.2,.9,.3,1.2) both}
+  @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+  .card h2{margin:0 0 4px;font-size:22px;display:flex;align-items:center;gap:8px}
+  .card h2 svg{width:22px;height:22px;flex:none}
+  .card .sub{margin:0 0 14px;color:#6c7486;font-size:13px;line-height:1.4}
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 14px;border-radius:14px;background:#e3e7ee}
+  .tabs button{all:unset;text-align:center;padding:8px 0;border-radius:10px;font-size:13px;color:#5b6375;cursor:pointer}
+  .tabs button[aria-selected="true"]{background:#fff;color:#1d2433;box-shadow:0 1px 3px rgba(20,30,60,.18)}
+  .tabs button:focus-visible{outline:2px solid #5b8dff}
+  .card label{display:block;margin:0 0 10px;font-size:12px;color:#6c7486}
+  .card label[hidden]{display:none}
+  .card input{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;border:1.5px solid #d4d9e3;border-radius:12px;background:#fff;font:500 16px "Helvetica Neue",Arial,sans-serif;color:#1d2433;outline:none;transition:border-color 150ms ease}
+  .card input:focus{border-color:#5b8dff}
+  .err{min-height:18px;margin:2px 0 8px;color:#c4372b;font-size:12.5px}
+  .err.ok{color:#1f7a43}
+  .go{display:block;width:100%;padding:11px 0;border:0;border-radius:14px;background:linear-gradient(#6b9bff,#3f74ea);color:#fff;font:600 16px "Arial Rounded MT Bold","Nunito","Helvetica Neue",Arial,sans-serif;cursor:pointer;box-shadow:0 4px 12px -4px rgba(63,116,234,.7);transition:transform 120ms ease,filter 120ms ease}
+  .go:active{transform:scale(.97)}
+  .go:disabled{filter:grayscale(.6) opacity(.7);cursor:default}
+  .row{display:flex;justify-content:space-between;margin-top:10px}
+  .link{all:unset;cursor:pointer;font-size:13px;color:#5b6375;padding:6px 2px}
+  .link.danger{color:#c4372b}
+  .link[hidden]{display:none}
+  .link:focus-visible{outline:2px solid #5b8dff;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){.card{animation:none}}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<a class="back" href="./">&larr; santiagoalvarezv.com</a>
+<div id="stage"></div>
+<p class="hint">drag to turn it · double-click to open or close · tap an app to open it</p>
+
+<div class="sheet" id="sheet" hidden>
+  <form class="card" id="sheet-form" novalidate>
+    <h2 id="s-title">Welcome</h2>
+    <p class="sub" id="s-sub"></p>
+    <div class="tabs" role="tablist" id="s-tabs">
+      <button type="button" role="tab" id="tab-a"></button>
+      <button type="button" role="tab" id="tab-b"></button>
+    </div>
+    <label id="f-name">Name<input name="name" autocomplete="username" maxlength="16" spellcheck="false" autocapitalize="off"></label>
+    <label id="f-old">Current password<input type="password" name="old" autocomplete="current-password"></label>
+    <label id="f-pass">Password<input type="password" name="pass" autocomplete="current-password"></label>
+    <label id="f-rep">Repeat password<input type="password" name="rep" autocomplete="new-password"></label>
+    <p class="err" id="s-err" role="alert"></p>
+    <button class="go" id="s-go" type="submit">Log in</button>
+    <div class="row">
+      <button type="button" class="link" id="s-close">Close</button>
+      <button type="button" class="link danger" id="s-out">Log out</button>
+    </div>
+  </form>
+</div>
+
+<script type="module" src="console.js"></script>
+</body>
+</html>

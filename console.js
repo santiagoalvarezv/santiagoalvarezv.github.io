@@ -1,0 +1,884 @@
+/* handheld prototype: a clamshell console with two screens, modelled in millimetres.
+   bottom half lies on the table, top half swings on the hinge. no logos, screens are blank for now. */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js';
+
+/* ---------- sizes (mm), roughly a big-screen clamshell handheld ---------- */
+const W = 156, D = 93;          /* width and depth of each half */
+const TB = 11.5, TT = 9.5;      /* thickness of bottom and top half */
+const RC = 12;                  /* corner radius */
+const HY = TB + 3.2, HZ = 5.5;  /* hinge axis: height above the table, distance in from the back edge */
+const OPEN = THREE.MathUtils.degToRad(-24), SHUT = THREE.MathUtils.degToRad(90);
+
+/* ---------- renderer, scene, camera ---------- */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe7e5e0);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(28, 1, 1, 4000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.enablePan = false;
+controls.minDistance = 220; controls.maxDistance = 900;
+controls.minPolarAngle = 0.15; controls.maxPolarAngle = Math.PI / 2 - 0.04;
+controls.target.set(0, 42, 18);
+camera.position.set(0, 215, 330);
+
+/* light: soft key from the upper left, a fill, and a floor that only shows the shadow */
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d4ca, 0.55));
+const key = new THREE.DirectionalLight(0xffffff, 1.6);
+key.position.set(-160, 320, 220); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -200, right: 200, top: 200, bottom: -200, near: 10, far: 900 });
+key.shadow.radius = 6; key.shadow.bias = -0.0004;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.45); fill.position.set(220, 120, 160); scene.add(fill);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.ShadowMaterial({ opacity: 0.16 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+/* ---------- materials ---------- */
+const M = {
+  shell: new THREE.MeshPhysicalMaterial({ color: 0x18191c, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35, envMapIntensity: 0.35 }),
+  inner: new THREE.MeshPhysicalMaterial({ color: 0x1e1f22, roughness: 0.7, clearcoat: 0.1, envMapIntensity: 0.3 }),
+  gloss: new THREE.MeshPhysicalMaterial({ color: 0x050506, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.35 }),
+  key: new THREE.MeshPhysicalMaterial({ color: 0x27282c, roughness: 0.4, clearcoat: 0.5, clearcoatRoughness: 0.25, envMapIntensity: 0.6 }),
+  pad: new THREE.MeshPhysicalMaterial({ color: 0x8f8f8d, roughness: 0.55, clearcoat: 0.2 }),
+  ring: new THREE.MeshPhysicalMaterial({ color: 0x141416, roughness: 0.5 }),
+  hole: new THREE.MeshBasicMaterial({ color: 0x050505 }),
+  hinge: new THREE.MeshPhysicalMaterial({ color: 0x1f2023, roughness: 0.35, clearcoat: 0.6, clearcoatRoughness: 0.2, envMapIntensity: 0.6 }),
+  slider: new THREE.MeshPhysicalMaterial({ color: 0xb9b9b6, roughness: 0.35, metalness: 0.4 }),
+  led: new THREE.MeshBasicMaterial({ color: 0x4a7dff }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transparent: true, opacity: 0.12, clearcoat: 1 }),
+};
+
+/* ---------- little helpers ---------- */
+function roundedRect(w, h, r){
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+/* a rounded slab lying in XY, from z = 0 to z = t, with soft edges */
+function slab(w, h, r, t, bevel, mat){
+  const b = Math.min(bevel, t / 2 - 0.01);
+  const g = new THREE.ExtrudeGeometry(roundedRect(w - 2 * b, h - 2 * b, Math.max(0.1, r - b)), { depth: t - 2 * b, bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: 5, curveSegments: 28 });
+  g.translate(0, 0, b);
+  const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; return m;
+}
+function disc(r, h, mat, seg = 48){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
+  m.rotation.x = Math.PI / 2; m.castShadow = true; return m;   /* axis along z, flat face up */
+}
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+/* printed text: a transparent decal facing +z */
+function print(text, wmm, hmm, opts = {}){
+  const px = 24, cw = Math.round(wmm * px), ch = Math.round(hmm * px);
+  const tex = canvasTex(cw, ch, (g) => {
+    g.fillStyle = opts.color || 'rgba(205,205,200,.85)';
+    g.font = (opts.weight || 500) + ' ' + Math.round(ch * (opts.size || 0.7)) + 'px "Helvetica Neue", Arial, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (opts.spacing) g.letterSpacing = opts.spacing + 'px';
+    g.fillText(text, cw / 2, ch / 2 + 1);
+  });
+  return new THREE.Mesh(new THREE.PlaneGeometry(wmm, hmm), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+}
+function at(obj, x, y, z){ obj.position.set(x, y, z); return obj; }
+
+/* ---------- the screens: a home menu of apps underneath, the selected app's banner on top ----------
+   every app here is a placeholder for now; only the map is switched on. later each one becomes a hackathon. */
+/* ---------- accounts and points ----------
+   two ways to keep them, same calls either way:
+   - supabase (games/config.js filled in): one shared ranking for everyone. see games/supabase.sql
+   - local (config empty): kept in this browser only, passwords salted and hashed with PBKDF2 */
+function localStore(){
+  const KEY = 'hs_users', SES = 'hs_session', enc = new TextEncoder();
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+  const write = (u) => { try { localStorage.setItem(KEY, JSON.stringify(u)); } catch (e) {} };
+  const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+  const salt = () => hex(crypto.getRandomValues(new Uint8Array(16)));
+  async function hash(pass, sl){
+    const k = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits']);
+    return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(sl), iterations: 150000, hash: 'SHA-256' }, k, 256));
+  }
+  const key = (n) => n.trim().toLowerCase();
+  let me = null;
+  try { const s = localStorage.getItem(SES); if (s && read()[s]) me = s; } catch (e) {}
+  const remember = (k) => { me = k; try { localStorage.setItem(SES, k); } catch (e) {} };
+  return {
+    shared: false, ready: Promise.resolve(),
+    user(){ const u = read()[me]; return u ? { name: u.name, points: u.points, games: u.games || 0 } : null; },
+    async signUp(name, pass){
+      const u = read(), k = key(name); if (u[k]) throw 'taken';
+      const sl = salt(); u[k] = { name: name.trim(), salt: sl, hash: await hash(pass, sl), points: 0, games: 0 }; write(u); remember(k);
+    },
+    async logIn(name, pass){ const r = read()[key(name)]; if (!r || await hash(pass, r.salt) !== r.hash) throw 'wrong'; remember(key(name)); },
+    async logOut(){ me = null; try { localStorage.removeItem(SES); } catch (e) {} },
+    async addPoints(n){ const u = read(); if (!u[me]) return; u[me].points += n; u[me].games = (u[me].games || 0) + 1; write(u); },
+    async ranking(){ return Object.values(read()).map((r) => ({ name: r.name, points: r.points })).sort((a, b) => b.points - a.points); },
+    async rename(name){
+      const u = read(), k = key(name); if (k !== me && u[k]) throw 'taken';
+      const r = u[me]; delete u[me]; r.name = name.trim(); u[k] = r; write(u); remember(k);
+    },
+    async setPassword(old, pass){
+      const u = read(), r = u[me]; if (await hash(old, r.salt) !== r.hash) throw 'wrong';
+      r.salt = salt(); r.hash = await hash(pass, r.salt); write(u);
+    },
+  };
+}
+
+function supabaseStore(url, anon){
+  let sb = null, profile = null;
+  const fail = (e) => { throw e; };
+  async function load(){
+    const { data } = await sb.auth.getSession();
+    if (!data.session){ profile = null; return; }
+    const r = await sb.from('profiles').select('name, points, games, login_email').eq('id', data.session.user.id).maybeSingle();
+    profile = r.data || null;
+  }
+  const ready = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm')
+    .then(({ createClient }) => { sb = createClient(url, anon, { auth: { persistSession: true, storageKey: 'hs_supabase' } }); return load(); })
+    .catch(() => { profile = null; });
+  return {
+    shared: true, ready,
+    user(){ return profile ? { name: profile.name, points: profile.points, games: profile.games } : null; },
+    async signUp(name, pass){
+      const t = await sb.rpc('name_taken', { p_name: name }); if (t.error) fail('net'); if (t.data) fail('taken');
+      const email = crypto.randomUUID() + '@players.santiagoalvarezv.com';
+      const r = await sb.auth.signUp({ email, password: pass, options: { data: { name: name.trim() } } });
+      if (r.error) fail(/database|duplicate|unique/i.test(r.error.message) ? 'taken' : 'net');
+      if (!r.data.session) fail('confirm');   /* email confirmation is still switched on in supabase */
+      await load();
+    },
+    async logIn(name, pass){
+      const e = await sb.rpc('login_email', { p_name: name }); if (e.error) fail('net'); if (!e.data) fail('wrong');
+      const r = await sb.auth.signInWithPassword({ email: e.data, password: pass }); if (r.error) fail('wrong');
+      await load();
+    },
+    async logOut(){ await sb.auth.signOut(); profile = null; },
+    async addPoints(n){ if (!profile) return; await sb.rpc('add_points', { p: n }); await load(); },
+    async ranking(){
+      const r = await sb.from('ranking').select('name, points').order('points', { ascending: false }).limit(50);
+      return r.data || [];
+    },
+    async rename(name){
+      if (name.trim().toLowerCase() !== (profile.name || '').toLowerCase()){ const t = await sb.rpc('name_taken', { p_name: name }); if (t.data) fail('taken'); }
+      const r = await sb.rpc('rename', { p_name: name }); if (r.error) fail(/unique|duplicate/i.test(r.error.message) ? 'taken' : 'net');
+      await load();
+    },
+    async setPassword(old, pass){
+      const check = await sb.auth.signInWithPassword({ email: profile.login_email, password: old }); if (check.error) fail('wrong');
+      const r = await sb.auth.updateUser({ password: pass }); if (r.error) fail('net');
+    },
+  };
+}
+const store = SUPABASE_URL && SUPABASE_KEY ? supabaseStore(SUPABASE_URL, SUPABASE_KEY) : localStore();
+
+const FONT = '"Arial Rounded MT Bold", "Nunito", "Helvetica Neue", Arial, sans-serif';
+const APPS = [
+  { id: 'maps', name: 'Maps', on: true }, { id: 'ranks', name: 'Rankings', on: true }, { id: 'settings', name: 'Settings', on: true },
+  { id: 'camera', name: 'Camera' }, { id: 'music', name: 'Music' }, { id: 'mail', name: 'Mail' }, { id: 'notes', name: 'Notes' }, { id: 'web', name: 'Browser' },
+];
+const SELECTED = 'maps';
+
+function backdrop(g, w, h){
+  const grd = g.createLinearGradient(0, 0, 0, h);
+  grd.addColorStop(0, '#f3f5fa'); grd.addColorStop(1, '#e1e6ef');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  const s = h / 4.6, gap = s * 0.18;
+  g.fillStyle = 'rgba(255,255,255,.42)'; g.strokeStyle = 'rgba(190,198,215,.18)'; g.lineWidth = 2;
+  for (let y = -s * 0.4; y < h; y += s + gap) for (let x = -s * 0.3; x < w; x += s + gap){ g.beginPath(); g.roundRect(x, y, s, s, s * 0.24); g.fill(); g.stroke(); }
+}
+function vignette(g, w, h){
+  const v = g.createRadialGradient(w / 2, h / 2, h * 0.25, w / 2, h / 2, w * 0.72);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(40,50,80,.09)');
+  g.fillStyle = v; g.fillRect(0, 0, w, h);
+}
+function shadowed(g, fn, blur, dy){ g.save(); g.shadowColor = 'rgba(40,55,90,.28)'; g.shadowBlur = blur; g.shadowOffsetY = dy; fn(); g.restore(); }
+
+/* a little map, used for the icon and, bigger, for the banner */
+function drawMap(g, x, y, w, h, r, detail){
+  g.save(); g.beginPath(); g.roundRect(x, y, w, h, r); g.clip();
+  g.fillStyle = '#eef0e3'; g.fillRect(x, y, w, h);
+  g.fillStyle = '#bfe3a2'; g.beginPath(); g.ellipse(x + w * 0.24, y + h * 0.3, w * 0.2, h * 0.17, -0.3, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(x + w * 0.82, y + h * 0.82, w * 0.16, h * 0.13, 0.4, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#8fc6ef'; g.lineWidth = Math.max(3, w * 0.07); g.lineCap = 'round';
+  g.beginPath(); g.moveTo(x - w * 0.05, y + h * 0.66); g.bezierCurveTo(x + w * 0.3, y + h * 0.5, x + w * 0.55, y + h * 0.95, x + w * 1.05, y + h * 0.7); g.stroke();
+  g.strokeStyle = '#ffffff'; g.lineWidth = Math.max(2, w * 0.035);
+  [[0.05, 0.12, 0.95, 0.42], [0.35, -0.05, 0.62, 1.05], [-0.05, 0.9, 0.7, 0.55], [0.7, -0.05, 0.9, 1.05]].forEach(([a, b2, c, d]) => {
+    g.beginPath(); g.moveTo(x + w * a, y + h * b2); g.lineTo(x + w * c, y + h * d); g.stroke();
+  });
+  if (detail){
+    g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = Math.max(1, w * 0.012);
+    for (let i = 0; i < 9; i++){ g.beginPath(); g.moveTo(x + w * (i / 9), y); g.lineTo(x + w * (i / 9 + 0.12), y + h); g.stroke(); }
+    g.fillStyle = '#f6c56b'; g.fillRect(x + w * 0.52, y + h * 0.18, w * 0.06, h * 0.08); g.fillRect(x + w * 0.12, y + h * 0.62, w * 0.05, h * 0.07);
+  }
+  /* the pin */
+  const px = x + w * 0.56, py = y + h * 0.46, pr = Math.min(w, h) * 0.13;
+  g.fillStyle = '#e8463a'; g.beginPath(); g.arc(px, py - pr, pr, Math.PI, 0); g.lineTo(px, py + pr * 0.9); g.closePath(); g.fill();
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(px, py - pr, pr * 0.42, 0, Math.PI * 2); g.fill();
+  g.restore();
+}
+
+/* one app icon: a white rounded tile with a simple drawing of its own */
+function drawIcon(g, app, x, y, s){
+  const r = s * 0.2;
+  shadowed(g, () => { g.fillStyle = '#ffffff'; g.beginPath(); g.roundRect(x, y, s, s, r); g.fill(); }, s * 0.12, s * 0.04);
+  const p = s * 0.14, ix = x + p, iy = y + p, is = s - 2 * p, ir = r * 0.7;
+  const tile = (c1, c2) => { const gr = g.createLinearGradient(0, iy, 0, iy + is); gr.addColorStop(0, c1); gr.addColorStop(1, c2); g.fillStyle = gr; g.beginPath(); g.roundRect(ix, iy, is, is, ir); g.fill(); };
+  const cx = ix + is / 2, cy = iy + is / 2, u = is / 10;
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  switch (app.id){
+    case 'maps': drawMap(g, ix, iy, is, is, ir, false); break;
+    case 'camera':
+      tile('#ffb04a', '#f07e1e'); g.fillStyle = '#fff';
+      g.beginPath(); g.roundRect(cx - 3.4 * u, cy - 2 * u, 6.8 * u, 4.8 * u, u); g.fill(); g.fillRect(cx - 1.2 * u, cy - 3 * u, 2.4 * u, 1.4 * u);
+      g.fillStyle = '#f07e1e'; g.beginPath(); g.arc(cx, cy + 0.4 * u, 1.6 * u, 0, Math.PI * 2); g.fill(); break;
+    case 'music':
+      tile('#5b8dff', '#2f5fe0'); g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineWidth = u * 0.9;
+      g.beginPath(); g.moveTo(cx - 1.4 * u, cy + 2.2 * u); g.lineTo(cx - 1.4 * u, cy - 3 * u); g.lineTo(cx + 2.8 * u, cy - 3.8 * u); g.lineTo(cx + 2.8 * u, cy + 1.4 * u); g.stroke();
+      g.beginPath(); g.ellipse(cx - 2.5 * u, cy + 2.4 * u, 1.4 * u, 1.1 * u, -0.4, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(cx + 1.7 * u, cy + 1.6 * u, 1.4 * u, 1.1 * u, -0.4, 0, Math.PI * 2); g.fill(); break;
+    case 'settings':
+      tile('#c9ced8', '#9aa2b1'); g.fillStyle = '#fff';
+      for (let i = 0; i < 8; i++){ g.save(); g.translate(cx, cy); g.rotate(i * Math.PI / 4); g.fillRect(-0.8 * u, -3.6 * u, 1.6 * u, 2 * u); g.restore(); }
+      g.beginPath(); g.arc(cx, cy, 2.6 * u, 0, Math.PI * 2); g.fill(); g.fillStyle = '#9aa2b1'; g.beginPath(); g.arc(cx, cy, 1.1 * u, 0, Math.PI * 2); g.fill(); break;
+    case 'mail':
+      tile('#7cc6ff', '#3d97e6'); g.fillStyle = '#fff'; g.beginPath(); g.roundRect(cx - 3.4 * u, cy - 2.3 * u, 6.8 * u, 4.6 * u, 0.6 * u); g.fill();
+      g.strokeStyle = '#3d97e6'; g.lineWidth = u * 0.6; g.beginPath(); g.moveTo(cx - 3 * u, cy - 1.9 * u); g.lineTo(cx, cy + 0.4 * u); g.lineTo(cx + 3 * u, cy - 1.9 * u); g.stroke(); break;
+    case 'notes':
+      tile('#ffe27a', '#f5c531'); g.fillStyle = '#fffdf2'; g.beginPath(); g.roundRect(cx - 3 * u, cy - 3.4 * u, 6 * u, 6.8 * u, 0.5 * u); g.fill();
+      g.strokeStyle = '#e0b23a'; g.lineWidth = u * 0.4; for (let i = 0; i < 4; i++){ g.beginPath(); g.moveTo(cx - 2 * u, cy - 1.8 * u + i * 1.4 * u); g.lineTo(cx + 2 * u, cy - 1.8 * u + i * 1.4 * u); g.stroke(); } break;
+    case 'web':
+      tile('#5fd0c5', '#24a59a'); g.strokeStyle = '#fff'; g.lineWidth = u * 0.6;
+      g.beginPath(); g.arc(cx, cy, 3.2 * u, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.ellipse(cx, cy, 1.4 * u, 3.2 * u, 0, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.moveTo(cx - 3.2 * u, cy); g.lineTo(cx + 3.2 * u, cy); g.stroke(); break;
+    case 'ranks':   /* a classic racing cup */
+      tile('#ffd866', '#f2a91c'); g.fillStyle = '#fff';
+      g.beginPath(); g.moveTo(cx - 2.6 * u, cy - 3.4 * u); g.lineTo(cx + 2.6 * u, cy - 3.4 * u); g.bezierCurveTo(cx + 2.6 * u, cy + 0.6 * u, cx + 1.2 * u, cy + 1.4 * u, cx, cy + 1.4 * u); g.bezierCurveTo(cx - 1.2 * u, cy + 1.4 * u, cx - 2.6 * u, cy + 0.6 * u, cx - 2.6 * u, cy - 3.4 * u); g.fill();
+      g.strokeStyle = '#fff'; g.lineWidth = u * 0.7;
+      g.beginPath(); g.arc(cx - 2.7 * u, cy - 1.8 * u, 1.3 * u, Math.PI * 0.5, Math.PI * 1.5); g.stroke();
+      g.beginPath(); g.arc(cx + 2.7 * u, cy - 1.8 * u, 1.3 * u, -Math.PI * 0.5, Math.PI * 0.5); g.stroke();
+      g.fillRect(cx - 0.5 * u, cy + 1.2 * u, u, 1.4 * u);
+      g.beginPath(); g.roundRect(cx - 2 * u, cy + 2.5 * u, 4 * u, 1.2 * u, 0.3 * u); g.fill();
+      g.fillStyle = '#f2a91c'; g.font = '700 ' + (2.4 * u) + 'px ' + FONT; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('1', cx, cy - 1.4 * u); break;
+    case 'photos':
+      tile('#ff8fb3', '#e9578a'); g.fillStyle = '#fff'; g.beginPath(); g.roundRect(cx - 3.2 * u, cy - 2.6 * u, 6.4 * u, 5.2 * u, 0.6 * u); g.fill();
+      g.fillStyle = '#e9578a'; g.beginPath(); g.moveTo(cx - 2.6 * u, cy + 2 * u); g.lineTo(cx - 0.6 * u, cy - 0.6 * u); g.lineTo(cx + 0.6 * u, cy + 0.8 * u); g.lineTo(cx + 1.4 * u, cy); g.lineTo(cx + 2.6 * u, cy + 2 * u); g.closePath(); g.fill();
+      g.beginPath(); g.arc(cx + 1.5 * u, cy - 1.3 * u, 0.7 * u, 0, Math.PI * 2); g.fill(); break;
+  }
+  if (!app.on){ g.fillStyle = 'rgba(243,245,250,.55)'; g.beginPath(); g.roundRect(x, y, s, s, r); g.fill(); }   /* not switched on yet */
+}
+/* green corner brackets around the selected app */
+function brackets(g, x, y, s){
+  const o = s * 0.1, L = s * 0.24, k = [[x - o, y - o, 1, 1], [x + s + o, y - o, -1, 1], [x - o, y + s + o, 1, -1], [x + s + o, y + s + o, -1, -1]];
+  g.strokeStyle = '#3fd27f'; g.lineWidth = s * 0.07; g.lineCap = 'round'; g.lineJoin = 'round';
+  shadowed(g, () => k.forEach(([px, py, dx, dy]) => { g.beginPath(); g.moveTo(px + dx * L, py); g.lineTo(px, py); g.lineTo(px, py + dy * L); g.stroke(); }), s * 0.12, 0);
+}
+
+function drawBottom(g, w, h){
+  backdrop(g, w, h);
+  /* toolbar of small shortcuts along the top */
+  const tb = h * 0.115;
+  shadowed(g, () => { g.fillStyle = 'rgba(255,255,255,.94)'; g.fillRect(0, 0, w, tb); }, 10, 2);
+  const glyphs = ['#9aa7bd', '#f2b632', '#f29b3a', '#4fc3a1', '#4f8ff2', '#7bc75b', '#b0b7c6'];
+  glyphs.forEach((c, i) => {
+    const gx = w * 0.09 + i * w * 0.12, gy = tb / 2;
+    g.fillStyle = c; g.beginPath(); g.roundRect(gx - tb * 0.3, gy - tb * 0.3, tb * 0.6, tb * 0.6, tb * 0.16); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.arc(gx, gy, tb * 0.12, 0, Math.PI * 2); g.fill();
+  });
+  /* the grid of apps: 4 across, 2 down, with the next page peeking at the edges */
+  const s = h * 0.27, gap = s * 0.2, cols = 4, gridW = cols * s + (cols - 1) * gap;
+  const x0 = (w - gridW) / 2, y0 = tb + h * 0.075;
+  [[-1, 0], [-1, 1], [cols, 0], [cols, 1]].forEach(([c, r2]) => {   /* half-hidden tiles of the next pages */
+    g.globalAlpha = 0.55; shadowed(g, () => { g.fillStyle = '#fff'; g.beginPath(); g.roundRect(x0 + c * (s + gap), y0 + r2 * (s + gap), s, s, s * 0.2); g.fill(); }, s * 0.1, s * 0.03); g.globalAlpha = 1;
+  });
+  APPS.forEach((app, i) => {
+    const c = i % cols, r2 = Math.floor(i / cols), x = x0 + c * (s + gap), y = y0 + r2 * (s + gap);
+    drawIcon(g, app, x, y, s);
+    if (app.id === SELECTED) brackets(g, x, y, s);
+  });
+  /* the button at the bottom */
+  const bh = h * 0.12, by = h - bh - h * 0.02;
+  shadowed(g, () => { const gr = g.createLinearGradient(0, by, 0, by + bh); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#e4e8ef'); g.fillStyle = gr; g.beginPath(); g.roundRect(w * 0.04, by, w * 0.92, bh, bh * 0.35); g.fill(); }, 8, 2);
+  g.fillStyle = '#4a5160'; g.font = '600 ' + Math.round(bh * 0.5) + 'px ' + FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Open', w / 2, by + bh / 2 + 2);
+  vignette(g, w, h);
+}
+
+function drawTop(g, w, h){
+  backdrop(g, w, h);
+  /* status bar: signal, mail, date and time in london, battery */
+  const sb = h * 0.085;
+  g.fillStyle = 'rgba(255,255,255,.92)'; g.fillRect(0, 0, w, sb);
+  g.fillStyle = 'rgba(120,130,150,.3)'; g.fillRect(0, sb, w, 2);
+  const u = sb / 10;
+  g.fillStyle = '#5c8fe6'; for (let i = 0; i < 4; i++) g.fillRect(w * 0.02 + i * 2.2 * u, sb * 0.75 - (i + 1) * 1.6 * u, 1.5 * u, (i + 1) * 1.6 * u);
+  const now = new Date(), fmt = (o) => new Intl.DateTimeFormat('en-GB', Object.assign({ timeZone: 'Europe/London' }, o)).format(now);
+  g.fillStyle = '#4a5160'; g.font = '600 ' + Math.round(sb * 0.58) + 'px ' + FONT; g.textBaseline = 'middle'; g.textAlign = 'right';
+  const me = store.user();
+  if (me){ g.textAlign = 'left'; g.fillText(me.name + '  ·  ' + me.points + ' pts', w * 0.02 + 10 * u, sb / 2 + 1); g.textAlign = 'right'; }
+  g.fillText(fmt({ day: '2-digit', month: '2-digit' }) + ' (' + fmt({ weekday: 'short' }) + ')   ' + fmt({ hour: '2-digit', minute: '2-digit', hour12: false }), w * 0.9, sb / 2 + 1);
+  g.strokeStyle = '#4a5160'; g.lineWidth = u * 0.7; g.strokeRect(w * 0.925, sb * 0.28, w * 0.05, sb * 0.46);
+  g.fillStyle = '#5cc77b'; g.fillRect(w * 0.929, sb * 0.34, w * 0.035, sb * 0.34); g.fillStyle = '#4a5160'; g.fillRect(w * 0.976, sb * 0.4, u * 0.8, sb * 0.2);
+  /* the selected app's banner */
+  const bw = w * 0.62, bh = h * 0.66, bx = (w - bw) / 2, by = sb + (h - sb - bh) / 2 - h * 0.02;
+  shadowed(g, () => { g.fillStyle = '#fff'; g.beginPath(); g.roundRect(bx - h * 0.02, by - h * 0.02, bw + h * 0.04, bh + h * 0.04, h * 0.07); g.fill(); }, h * 0.06, h * 0.02);
+  drawMap(g, bx, by, bw, bh, h * 0.055, true);
+  /* its name on a pill */
+  const label = 'Maps', fs = Math.round(h * 0.08); g.font = '700 ' + fs + 'px ' + FONT;
+  const lw = g.measureText(label).width + fs * 1.4, lx = bx + bw * 0.06, ly = by + bh - fs * 1.9;
+  shadowed(g, () => { g.fillStyle = 'rgba(255,255,255,.96)'; g.beginPath(); g.roundRect(lx, ly, lw, fs * 1.45, fs * 0.72); g.fill(); }, 10, 3);
+  g.fillStyle = '#2f6fd8'; g.textAlign = 'left'; g.fillText(label, lx + fs * 0.7, ly + fs * 0.78);
+  vignette(g, w, h);
+}
+
+/* each screen is a canvas; painters[kind] decides what is on it (the menu now, the game later) */
+const screens = {};
+const painters = { top: drawTop, bottom: drawBottom };
+function screen(wmm, hmm, kind){
+  const grp = new THREE.Group(), px = 12;
+  const tex = canvasTex(Math.round(wmm * px), Math.round(hmm * px), (g, w, h) => painters[kind](g, w, h));
+  const lcd = new THREE.Mesh(new THREE.PlaneGeometry(wmm, hmm), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(wmm, hmm), M.glass);
+  glass.position.z = 0.05; glass.raycast = () => {};   /* clicks go through the glass to the screen */
+  grp.add(lcd, glass);
+  lcd.userData.kind = kind;
+  screens[kind] = { tex, lcd };
+  return grp;
+}
+function paint(kind){
+  const s = screens[kind]; if (!s) return;
+  const c = s.tex.image, g = c.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
+  painters[kind](g, c.width, c.height); s.tex.needsUpdate = true;
+}
+/* the clock on the top screen keeps time */
+setInterval(() => paint('top'), 30000);
+const tickers = [];
+
+/* =========================================================
+   bottom half: built lying in XY (y = 0 at the hinge edge, y < 0 toward you), face at z = TB,
+   then tipped flat onto the table
+   ========================================================= */
+const bottom = new THREE.Group();
+bottom.rotation.x = -Math.PI / 2;
+scene.add(bottom);
+{
+  const B = bottom, Z = TB;
+  B.add(at(slab(W, D, RC, TB, 3.2, M.shell), 0, -D / 2, 0));
+  /* matte inner plate, a hair above the shell */
+  B.add(at(slab(W - 5, D - 12, RC - 2, 0.25, 0.1, M.inner), 0, -D / 2 - 3.5, Z - 0.22));
+
+  /* touch screen in a gloss-black frame */
+  B.add(at(slab(89, 67.5, 2.6, 0.6, 0.2, M.gloss), 0, -45.5, Z));
+  B.add(at(screen(84, 63, 'bottom'), 0, -45.5, Z + 0.62));
+
+  /* select / home / start strip under the screen */
+  B.add(at(slab(82, 6.6, 2.2, 0.5, 0.15, M.ring), 0, -86.3, Z));
+  [['SELECT', -26.6], ['HOME', 0], ['START', 26.6]].forEach(([t, x]) => {
+    const k = new THREE.Mesh(new RoundedBoxGeometry(25, 4.8, 1.4, 3, 0.5), M.key);
+    B.add(at(k, x, -86.3, Z + 0.7)); k.castShadow = true;
+    B.add(at(print(t === 'HOME' ? '⌂  HOME' : t, 22, 3.2, { size: 0.66, spacing: 2, color: 'rgba(170,170,166,.9)' }), x, -86.3, Z + 1.42));
+  });
+
+  /* circle pad: grey cap in a dark ring */
+  B.add(at(disc(11.4, 1.2, M.ring), -61.5, -27, Z + 0.4));
+  const cap = disc(8.7, 2.6, M.pad); B.add(at(cap, -61.5, -27, Z + 1.5));
+  const dimple = new THREE.Mesh(new THREE.TorusGeometry(6.5, 0.32, 8, 48), M.pad); B.add(at(dimple, -61.5, -27, Z + 2.8));
+
+  /* d-pad */
+  B.add(at(disc(10.8, 0.5, M.ring), -61.5, -61, Z + 0.1));
+  const armA = new THREE.Mesh(new RoundedBoxGeometry(18.4, 5.9, 2.1, 3, 0.8), M.key);
+  const armB = new THREE.Mesh(new RoundedBoxGeometry(5.9, 18.4, 2.1, 3, 0.8), M.key);
+  [armA, armB].forEach((a) => { a.castShadow = true; B.add(at(a, -61.5, -61, Z + 1.0)); });
+  [[0, 5.9], [0, -5.9], [-5.9, 0], [5.9, 0]].forEach(([dx, dy]) => {   /* little raised lines on each arm */
+    const l = new THREE.Mesh(new THREE.BoxGeometry(dx ? 2.9 : 0.6, dy ? 2.9 : 0.6, 0.25), M.ring);
+    B.add(at(l, -61.5 + dx, -61 + dy, Z + 2.1));
+  });
+
+  /* A B X Y */
+  const cx = 61.5, cy = -29.5, o = 8.9;
+  [['X', 0, o], ['B', 0, -o], ['Y', -o, 0], ['A', o, 0]].forEach(([t, dx, dy]) => {
+    B.add(at(disc(5.0, 0.5, M.ring), cx + dx, cy + dy, Z + 0.1));
+    B.add(at(disc(4.3, 2.1, M.key), cx + dx, cy + dy, Z + 1.0));
+    const face = new THREE.Mesh(new THREE.CircleGeometry(3.8, 40), new THREE.MeshBasicMaterial({
+      transparent: true, depthWrite: false,
+      map: canvasTex(128, 128, (g) => {
+        g.strokeStyle = 'rgba(210,210,205,.55)'; g.lineWidth = 4; g.beginPath(); g.arc(64, 64, 58, 0, Math.PI * 2); g.stroke();
+        g.fillStyle = 'rgba(225,225,220,.92)'; g.font = '500 64px "Helvetica Neue", Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 64, 68);
+      }) }));
+    B.add(at(face, cx + dx, cy + dy, Z + 2.07));
+  });
+
+  /* power button and its ring, bottom right */
+  B.add(at(disc(3.9, 0.4, M.ring), 62, -71, Z + 0.1));
+  B.add(at(disc(3.0, 1.0, M.key), 62, -71, Z + 0.4));
+  B.add(at(print('⏻', 4.4, 4.4, { size: 0.7, color: 'rgba(170,170,166,.7)' }), 62, -71, Z + 0.92));
+
+  /* status leds on the front edge */
+  [50, 56, 62].forEach((x, i) => {
+    const l = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 1.2), i === 1 ? M.led : M.hole);
+    B.add(at(l, x, -D + 0.05, TB * 0.45));
+  });
+
+  /* shoulder buttons poking out at the back corners */
+  [-1, 1].forEach((s) => {
+    const sh = new THREE.Mesh(new RoundedBoxGeometry(30, 7, 6.5, 3, 2.4), M.hinge);
+    sh.castShadow = true; B.add(at(sh, s * (W / 2 - 19), 1.2, TB * 0.5));
+  });
+
+  /* hinge knuckles on both ends */
+  [-1, 1].forEach((s) => {
+    const k = new THREE.Mesh(new THREE.CylinderGeometry(5.9, 5.9, 24, 40), M.hinge);
+    k.rotation.z = Math.PI / 2; k.castShadow = true;
+    B.add(at(k, s * (W / 2 - 15), -HZ, HY));
+    const web = new THREE.Mesh(new RoundedBoxGeometry(24, 9, 6, 2, 1.5), M.hinge);
+    B.add(at(web, s * (W / 2 - 15), -HZ + 0.5, HY - 3.5));
+  });
+}
+
+/* =========================================================
+   top half: pivots on the hinge. built standing up (y = up from the hinge), face toward +z
+   ========================================================= */
+const hinge = new THREE.Group();
+hinge.position.set(0, HY, HZ);
+scene.add(hinge);
+const top = new THREE.Group();
+hinge.add(top);
+{
+  const T = top, Z = TT / 2, H = D - 2;           /* face at z = TT/2, shell from y = 2 to y = D */
+  const midY = 2 + H / 2 + 4;
+  /* middle hinge barrel */
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.6, W - 2 * 27.5, 48), M.hinge);
+  barrel.rotation.z = Math.PI / 2; barrel.castShadow = true; T.add(barrel);
+  [-1, 1].forEach((s) => {   /* a thin dark seam where the barrel meets the knuckles */
+    const seam = new THREE.Mesh(new THREE.CylinderGeometry(5.3, 5.3, 0.6, 40), M.hole);
+    seam.rotation.z = Math.PI / 2; T.add(at(seam, s * (W / 2 - 27.2), 0, 0));
+  });
+
+  const shell = slab(W, H - 6, RC, TT, 2.8, M.shell);
+  T.add(at(shell, 0, midY, -TT / 2));
+  T.add(at(slab(W - 5, H - 15, RC - 2, 0.25, 0.1, M.inner), 0, midY + 1.5, Z - 0.22));
+
+  /* the big screen in its gloss frame */
+  const sy = 50;
+  T.add(at(slab(114, 73, 3, 0.6, 0.2, M.gloss), 0, sy, Z));
+  T.add(at(screen(106.5, 64, 'top'), 0, sy, Z + 0.62));
+
+  /* inner camera and the two little sensors either side */
+  T.add(at(disc(2.4, 0.6, M.ring), 0, 89.5, Z + 0.2));
+  T.add(at(disc(1.5, 0.8, M.gloss), 0, 89.5, Z + 0.35));
+  [-46, 46].forEach((x) => T.add(at(disc(1.1, 0.6, M.ring), x, 89.5, Z + 0.2)));
+
+  /* speakers: rings of tiny holes */
+  [-1, 1].forEach((s) => {
+    const hx = s * 67, hy = sy + 6;
+    [[0, 1], [2.1, 6], [4.2, 12]].forEach(([r, n]) => {
+      for (let i = 0; i < n; i++){
+        const a = (i / n) * Math.PI * 2 + (r > 3 ? 0.26 : 0);
+        const h = new THREE.Mesh(new THREE.CircleGeometry(0.55, 14), M.hole);
+        T.add(at(h, hx + Math.cos(a) * r, hy + Math.sin(a) * r, Z + 0.08));
+      }
+    });
+  });
+
+  /* depth slider on the right of the screen, with its printed marks */
+  T.add(at(slab(2.6, 18, 1.1, 0.4, 0.1, M.hole), 75.2, 36, Z));
+  T.add(at(new THREE.Mesh(new RoundedBoxGeometry(3.4, 4.6, 2.4, 2, 0.8), M.slider), 75.2, 42.5, Z + 0.9));
+  T.add(at(print('3D', 6, 3, { size: 0.8, weight: 600, color: 'rgba(150,150,146,.85)' }), 69.5, 42.5, Z + 0.08));
+  T.add(at(print('OFF', 6, 2.6, { size: 0.72, color: 'rgba(150,150,146,.85)' }), 69.5, 29.5, Z + 0.08));
+}
+
+/* =========================================================
+   motion: the lid opens when the page loads; double-click to open or close; drag to turn
+   ========================================================= */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let angle = reduce ? OPEN : SHUT, goal = OPEN;
+function toggleLid(){ goal = goal === OPEN ? SHUT : OPEN; }
+hinge.rotation.x = angle;
+
+function fit(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  /* narrow windows: step back so the whole console fits */
+  const need = w / h < 1 ? 330 / (w / h) * 0.85 : 330;
+  camera.fov = 28; camera.updateProjectionMatrix();
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  if (!fit.done){ camera.position.copy(controls.target).add(dir.multiplyScalar(Math.max(390, need * 1.2))); fit.done = true; }
+}
+addEventListener('resize', fit); fit();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (Math.abs(goal - angle) > 1e-4){
+    angle += (goal - angle) * (1 - Math.exp(-dt * 4.2));
+    hinge.rotation.x = angle;
+  }
+  tickers.forEach((f) => f(dt));
+  controls.update();
+  renderer.render(scene, camera);
+});
+
+/* =========================================================
+   the maps app: "guess my hometown". world -> south america -> peru -> lima region -> lima, ending on san isidro.
+   starts at 100 points, every wrong pick costs 4. click straight on the 3D screens.
+   ========================================================= */
+const ES = (() => { try { return localStorage.getItem('lang') === 'es'; } catch (e) { return false; } })();
+const game = { data: null, mode: 'menu', level: 0, score: 100, wrong: new Set(), hover: null, flash: null, busy: false, paths: null };
+const START = 100, COST = 4;
+const hitCtx = document.createElement('canvas').getContext('2d');
+fetch('games/hometown.json').then((r) => r.json()).then((d) => { game.data = d; });
+
+function nameOf(L, n){ return ES && L.names_es && L.names_es[n] ? L.names_es[n] : n; }
+function buildPaths(L){
+  return L.regions.map((r) => { const p = new Path2D(); r.p.forEach((ring) => { p.moveTo(ring[0], ring[1]); for (let i = 2; i < ring.length; i += 2) p.lineTo(ring[i], ring[i + 1]); p.closePath(); }); return p; });
+}
+/* where the map sits on the top screen, and how big */
+function mapBox(L, w, h){
+  const v = L.view || [0, 0, L.w, L.h], vw = v[2] - v[0], vh = v[3] - v[1];
+  const ax = w * 0.03, ay = h * 0.15, aw = w * 0.94, ah = h * 0.82;
+  const sc = Math.min(aw / vw, ah / vh);
+  return { sc, ox: ax + (aw - vw * sc) / 2 - v[0] * sc, oy: ay + (ah - vh * sc) / 2 - v[1] * sc, clip: [ax, ay, aw, ah] };
+}
+
+function drawGameTop(g, w, h){
+  const L = game.data.levels[game.level];
+  g.fillStyle = '#f7f8fb'; g.fillRect(0, 0, w, h);
+  /* header: the question and the score */
+  const fs = Math.round(h * 0.062);
+  g.fillStyle = '#1d2433'; g.font = '700 ' + fs + 'px ' + FONT; g.textBaseline = 'middle'; g.textAlign = 'left';
+  g.fillText(L.q[ES ? 1 : 0], w * 0.04, h * 0.075);
+  g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(fs * 0.8) + 'px ' + FONT; g.textAlign = 'right';
+  g.fillText((ES ? 'puntos: ' : 'score: ') + game.score, w * 0.96, h * 0.075);
+  /* the map */
+  const b = mapBox(L, w, h);
+  g.save(); g.beginPath(); g.rect(...b.clip); g.clip();
+  g.strokeStyle = '#d3d7df'; g.lineWidth = 3; g.strokeRect(...b.clip);
+  g.translate(b.ox, b.oy); g.scale(b.sc, b.sc);
+  L.regions.forEach((r, i) => {
+    const won = game.flash && game.flash.ok && game.flash.i === i;
+    g.fillStyle = won ? '#4cc574' : game.wrong.has(i) ? '#ef7f74' : !r.c ? '#eef0f3' : game.hover === i ? '#c9d6ec' : '#e2e5eb';
+    g.fill(game.paths[i]);
+    g.strokeStyle = '#ffffff'; g.lineWidth = 2.2 / b.sc; g.stroke(game.paths[i]);
+  });
+  /* names of what's been picked, so a miss teaches something */
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  L.regions.forEach((r, i) => {
+    const won = game.flash && game.flash.ok && game.flash.i === i;
+    if (!won && !game.wrong.has(i)) return;
+    const f = Math.round(h * 0.04) / b.sc;
+    g.font = '700 ' + f + 'px ' + FONT; g.lineWidth = f * 0.28; g.strokeStyle = 'rgba(255,255,255,.9)'; g.fillStyle = won ? '#1f7a43' : '#a3271c';
+    g.strokeText(nameOf(L, r.n), r.l[0], r.l[1]); g.fillText(nameOf(L, r.n), r.l[0], r.l[1]);
+  });
+  g.restore();
+}
+function drawGameBottom(g, w, h){
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, '#f3f5fa'); grd.addColorStop(1, '#e1e6ef');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#1d2433'; g.font = '700 ' + Math.round(h * 0.085) + 'px ' + FONT;
+  g.fillText(ES ? 'adivina mi ciudad' : 'guess my hometown', w / 2, h * 0.14);
+  /* five steps */
+  const n = game.data.levels.length;
+  for (let i = 0; i < n; i++){
+    const x = w / 2 + (i - (n - 1) / 2) * w * 0.1, y = h * 0.3, done = i < game.level || game.mode === 'done';
+    g.fillStyle = done ? '#4cc574' : i === game.level ? '#5b8dff' : '#cfd5e0';
+    g.beginPath(); g.arc(x, y, h * 0.028, 0, Math.PI * 2); g.fill();
+  }
+  g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(h * 0.06) + 'px ' + FONT; g.fillText(ES ? 'puntos' : 'score', w / 2, h * 0.45);
+  g.fillStyle = '#2f6fd8'; g.font = '700 ' + Math.round(h * 0.2) + 'px ' + FONT; g.fillText(String(game.score), w / 2, h * 0.6);
+  g.fillStyle = '#8b93a5'; g.font = '500 ' + Math.round(h * 0.045) + 'px ' + FONT;
+  g.fillText(ES ? 'cada fallo resta 4' : 'every miss costs 4', w / 2, h * 0.74);
+  bottomButton(g, w, h, game.mode === 'done' ? (ES ? 'Jugar otra vez' : 'Play again') : (ES ? 'Volver' : 'Back'));
+}
+function bottomButton(g, w, h, label){
+  const bh = h * 0.12, by = h - bh - h * 0.02;
+  shadowed(g, () => { const gr = g.createLinearGradient(0, by, 0, by + bh); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#e4e8ef'); g.fillStyle = gr; g.beginPath(); g.roundRect(w * 0.04, by, w * 0.92, bh, bh * 0.35); g.fill(); }, 8, 2);
+  g.fillStyle = '#4a5160'; g.font = '600 ' + Math.round(bh * 0.5) + 'px ' + FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(label, w / 2, by + bh / 2 + 2);
+}
+function drawDoneTop(g, w, h){
+  const L = game.data.levels[game.data.levels.length - 1];
+  drawGameTop(g, w, h);
+  g.fillStyle = 'rgba(247,248,251,.86)'; g.fillRect(0, 0, w, h);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#1f7a43'; g.font = '700 ' + Math.round(h * 0.1) + 'px ' + FONT;
+  g.fillText(ES ? '¡Esa es mi casa!' : "That's home!", w / 2, h * 0.38);
+  g.fillStyle = '#1d2433'; g.font = '600 ' + Math.round(h * 0.06) + 'px ' + FONT;
+  g.fillText('San Isidro, Lima, ' + (ES ? 'Perú' : 'Peru'), w / 2, h * 0.53);
+  g.fillStyle = '#2f6fd8'; g.font = '700 ' + Math.round(h * 0.075) + 'px ' + FONT;
+  g.fillText((ES ? 'puntos: ' : 'score: ') + game.score + ' / ' + START, w / 2, h * 0.68);
+  const me = store.user();
+  if (me){ g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(h * 0.045) + 'px ' + FONT;
+    g.fillText((ES ? 'sumados a tu total: ' : 'added to your total: ') + me.points + ' pts', w / 2, h * 0.79); }
+  void L;
+}
+
+function setLevel(i){ game.level = i; game.wrong = new Set(); game.hover = null; game.flash = null; game.paths = buildPaths(game.data.levels[i]); }
+function startGame(){
+  if (!game.data) return;
+  game.mode = 'game'; game.score = START; setLevel(0);
+  painters.top = drawGameTop; painters.bottom = drawGameBottom; paint('top'); paint('bottom');
+  if (goal !== OPEN) goal = OPEN;
+  focusCamera(true);
+}
+function quitGame(){
+  game.mode = 'menu'; painters.top = drawTop; painters.bottom = drawBottom; paint('top'); paint('bottom');
+  focusCamera(false);
+}
+function pick(i){
+  const L = game.data.levels[game.level], r = L.regions[i];
+  if (!r || !r.c || game.busy || game.wrong.has(i)) return;
+  if (r.n === L.answer){
+    game.flash = { i, ok: true }; game.busy = true; paint('top');
+    setTimeout(() => {
+      game.busy = false;
+      if (game.level + 1 < game.data.levels.length){ setLevel(game.level + 1); paint('top'); paint('bottom'); }
+      else { game.mode = 'done'; painters.top = drawDoneTop; store.addPoints(game.score).then(() => { paint('top'); paint('bottom'); }); }
+    }, 1100);
+  } else {
+    game.wrong.add(i); game.score = Math.max(0, game.score - COST); paint('top'); paint('bottom');
+  }
+}
+
+/* pointer -> which screen, and where on it */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function screenAt(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects([screens.top.lcd, screens.bottom.lcd], false)[0];
+  if (!hit || !hit.uv) return null;
+  const c = screens[hit.object.userData.kind].tex.image;
+  return { kind: hit.object.userData.kind, x: hit.uv.x * c.width, y: (1 - hit.uv.y) * c.height, w: c.width, h: c.height };
+}
+function regionAt(p){
+  const L = game.data.levels[game.level], b = mapBox(L, p.w, p.h);
+  const [ax, ay, aw, ah] = b.clip; if (p.x < ax || p.y < ay || p.x > ax + aw || p.y > ay + ah) return null;
+  const dx = (p.x - b.ox) / b.sc, dy = (p.y - b.oy) / b.sc;
+  for (let i = L.regions.length - 1; i >= 0; i--) if (L.regions[i].c && hitCtx.isPointInPath(game.paths[i], dx, dy)) return i;
+  return null;
+}
+/* the menu: where each app tile and the open button sit (same maths as drawBottom) */
+function menuTarget(p){
+  const { w, h } = p, tb = h * 0.115, s = h * 0.27, gap = s * 0.2, cols = 4, gridW = cols * s + (cols - 1) * gap;
+  const x0 = (w - gridW) / 2, y0 = tb + h * 0.075, bh = h * 0.12, by = h - bh - h * 0.02;
+  if (p.y > by && p.y < by + bh && p.x > w * 0.04 && p.x < w * 0.96) return 'open';
+  for (let i = 0; i < APPS.length; i++){
+    const x = x0 + (i % cols) * (s + gap), y = y0 + Math.floor(i / cols) * (s + gap);
+    if (p.x > x && p.x < x + s && p.y > y && p.y < y + s) return APPS[i];
+  }
+  return null;
+}
+function isButton(p){ const bh = p.h * 0.12, by = p.h - bh - p.h * 0.02; return p.y > by && p.y < by + bh; }
+
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;   /* that was a drag */
+  const p = screenAt(e); if (!p) return;
+  if (game.mode === 'menu'){
+    const t = p.kind === 'bottom' && menuTarget(p);
+    if (t === 'open') openApp(SELECTED); else if (t && t.on) openApp(t.id);
+  } else if (p.kind === 'top' && game.mode === 'game'){
+    const i = regionAt(p); if (i != null) pick(i);
+  } else if (p.kind === 'bottom' && isButton(p)){
+    if (game.mode === 'done') startGame(); else quitGame();
+  }
+});
+renderer.domElement.addEventListener('pointermove', (e) => {
+  const p = screenAt(e);
+  let pointer = false;
+  if (p && game.mode === 'menu' && p.kind === 'bottom'){ const t = menuTarget(p); pointer = t === 'open' || !!(t && t.on); }
+  if (p && game.mode !== 'menu' && p.kind === 'bottom') pointer = isButton(p);
+  if (game.mode === 'game'){
+    const i = p && p.kind === 'top' ? regionAt(p) : null;
+    if (i !== game.hover && !game.busy){ game.hover = i; paint('top'); }
+    pointer = pointer || i != null;
+  }
+  renderer.domElement.style.cursor = pointer ? 'pointer' : '';
+});
+renderer.domElement.addEventListener('dblclick', (e) => { if (!screenAt(e) && game.mode === 'menu') toggleLid(); });
+
+/* while playing, the camera leans in to face the top screen; going back returns it */
+const home = { pos: camera.position.clone(), target: controls.target.clone() };
+let tween = null;
+function focusCamera(on){
+  const hint = document.querySelector('.hint'); if (hint) hint.style.opacity = on ? '0' : '';
+  let toPos, toTarget;
+  if (on){
+    home.pos.copy(camera.position); home.target.copy(controls.target);
+    const c = new THREE.Vector3(), n = new THREE.Vector3(0, 0, 1);
+    hinge.rotation.x = angle = OPEN;   /* aim at where the lid will be */
+    hinge.updateMatrixWorld(true);
+    screens.top.lcd.getWorldPosition(c);
+    n.applyQuaternion(screens.top.lcd.getWorldQuaternion(new THREE.Quaternion()));
+    const fovFit = (106.5 * 1.18 / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / Math.min(1, camera.aspect / 1.6);
+    toTarget = c.clone().add(new THREE.Vector3(0, -12, 0)); toPos = c.clone().add(n.multiplyScalar(fovFit)).add(new THREE.Vector3(0, -6, 18));
+  } else { toPos = home.pos.clone(); toTarget = home.target.clone(); }
+  tween = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: toPos, t1: toTarget };
+}
+tickers.push((dt) => {
+  if (!tween) return;
+  tween.t = Math.min(1, tween.t + dt / 0.9);
+  const k = 1 - Math.pow(1 - tween.t, 3);
+  camera.position.lerpVectors(tween.p0, tween.p1, k); controls.target.lerpVectors(tween.t0, tween.t1, k);
+  if (tween.t >= 1) tween = null;
+});
+
+/* =========================================================
+   apps: maps (the game), rankings (trophy), settings (gear)
+   ========================================================= */
+function openApp(id){
+  if (id === 'maps') startGame();
+  else if (id === 'ranks') openRanks();
+  else if (id === 'settings') openSheet('settings');
+}
+
+/* ---------- rankings: everyone's total, best first ---------- */
+let board = [];
+function openRanks(){
+  store.ranking().then((r) => {
+    board = r; game.mode = 'ranks';
+    painters.top = drawRanksTop; painters.bottom = drawRanksBottom; paint('top'); paint('bottom');
+    if (goal !== OPEN) goal = OPEN;
+    focusCamera(true);
+  });
+}
+function trophy(g, cx, cy, s, color){
+  g.fillStyle = color; g.strokeStyle = color; g.lineWidth = s * 0.09;
+  g.beginPath(); g.moveTo(cx - s * 0.3, cy - s * 0.42); g.lineTo(cx + s * 0.3, cy - s * 0.42);
+  g.bezierCurveTo(cx + s * 0.3, cy + s * 0.05, cx + s * 0.14, cy + s * 0.15, cx, cy + s * 0.15);
+  g.bezierCurveTo(cx - s * 0.14, cy + s * 0.15, cx - s * 0.3, cy + s * 0.05, cx - s * 0.3, cy - s * 0.42); g.fill();
+  g.beginPath(); g.arc(cx - s * 0.31, cy - s * 0.22, s * 0.14, Math.PI * 0.5, Math.PI * 1.5); g.stroke();
+  g.beginPath(); g.arc(cx + s * 0.31, cy - s * 0.22, s * 0.14, -Math.PI * 0.5, Math.PI * 0.5); g.stroke();
+  g.fillRect(cx - s * 0.05, cy + s * 0.13, s * 0.1, s * 0.16);
+  g.beginPath(); g.roundRect(cx - s * 0.22, cy + s * 0.28, s * 0.44, s * 0.13, s * 0.03); g.fill();
+}
+function drawRanksTop(g, w, h){
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, '#fff8e6'); grd.addColorStop(1, '#f3ead2');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  trophy(g, w * 0.07, h * 0.085, h * 0.11, '#f2a91c');
+  g.fillStyle = '#1d2433'; g.font = '700 ' + Math.round(h * 0.062) + 'px ' + FONT; g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText(ES ? 'Ranking' : 'Rankings', w * 0.12, h * 0.085);
+  const me = store.user(), rows = board.slice(0, 8), rh = h * 0.098, y0 = h * 0.18;
+  if (!rows.length){ g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(h * 0.05) + 'px ' + FONT; g.textAlign = 'center'; g.fillText(ES ? 'Aún nadie ha jugado' : 'Nobody has played yet', w / 2, h * 0.5); return; }
+  const medal = ['#f2b51c', '#aeb6c2', '#cd8a4f'];
+  rows.forEach((r, i) => {
+    const y = y0 + i * rh, mine = me && r.name === me.name;
+    g.fillStyle = mine ? 'rgba(91,141,255,.16)' : i % 2 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.9)';
+    g.beginPath(); g.roundRect(w * 0.04, y, w * 0.92, rh * 0.86, rh * 0.25); g.fill();
+    const cy = y + rh * 0.43, fs = Math.round(rh * 0.46);
+    if (i < 3) trophy(g, w * 0.085, cy, rh * 0.62, medal[i]);
+    else { g.fillStyle = '#8b93a5'; g.font = '700 ' + fs + 'px ' + FONT; g.textAlign = 'center'; g.fillText(String(i + 1), w * 0.085, cy + 2); }
+    g.fillStyle = '#1d2433'; g.font = (mine ? '700 ' : '600 ') + fs + 'px ' + FONT; g.textAlign = 'left'; g.fillText(r.name, w * 0.14, cy + 2);
+    g.fillStyle = '#2f6fd8'; g.font = '700 ' + fs + 'px ' + FONT; g.textAlign = 'right'; g.fillText(r.points + ' pts', w * 0.93, cy + 2);
+  });
+}
+function drawRanksBottom(g, w, h){
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, '#f3f5fa'); grd.addColorStop(1, '#e1e6ef');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  const me = store.user(); g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (me){
+    const pos = board.findIndex((r) => r.name === me.name) + 1;
+    g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(h * 0.06) + 'px ' + FONT; g.fillText(me.name, w / 2, h * 0.14);
+    trophy(g, w / 2, h * 0.36, h * 0.26, '#f2a91c');
+    g.fillStyle = '#1d2433'; g.font = '700 ' + Math.round(h * 0.11) + 'px ' + FONT; g.fillText('#' + (pos || '-'), w / 2, h * 0.6);
+    g.fillStyle = '#2f6fd8'; g.font = '700 ' + Math.round(h * 0.06) + 'px ' + FONT;
+    g.fillText(me.points + ' pts · ' + me.games + (ES ? ' partidas' : (me.games === 1 ? ' game' : ' games')), w / 2, h * 0.73);
+  }
+  bottomButton(g, w, h, ES ? 'Volver' : 'Back');
+}
+
+/* ---------- the sheet: sign in / create account, and settings ---------- */
+const $ = (id) => document.getElementById(id);
+const sheet = $('sheet'), form = $('sheet-form'), err = $('s-err');
+const T = (en, es) => (ES ? es : en);
+const NAME_OK = /^[\p{L}\p{N}_ .-]{3,16}$/u;
+let sheetMode = 'auth', tab = 'a';
+function show(id, on){ $(id).hidden = !on; }
+function layoutSheet(){
+  const auth = sheetMode === 'auth', a = tab === 'a';
+  err.textContent = ''; err.className = 'err';
+  $('tab-a').setAttribute('aria-selected', a); $('tab-b').setAttribute('aria-selected', !a);
+  if (auth){
+    $('s-title').textContent = T('Welcome', 'Bienvenido');
+    $('s-sub').textContent = a ? T('Sign in to keep your points.', 'Inicia sesión para guardar tus puntos.') : T('Pick a name and a password. Your points add up every game.', 'Elige un nombre y una contraseña. Tus puntos se suman en cada juego.');
+    $('tab-a').textContent = T('Log in', 'Entrar'); $('tab-b').textContent = T('Create account', 'Crear cuenta');
+    show('f-name', true); show('f-old', false); show('f-pass', true); show('f-rep', !a);
+    $('f-pass').firstChild.textContent = T('Password', 'Contraseña'); $('f-rep').firstChild.textContent = T('Repeat password', 'Repite la contraseña');
+    form.pass.autocomplete = a ? 'current-password' : 'new-password';
+    $('s-go').textContent = a ? T('Log in', 'Entrar') : T('Create account', 'Crear cuenta');
+    show('s-close', false); show('s-out', false);
+  } else {
+    $('s-title').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#6c7486" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>' + T('Settings', 'Configuración');
+    $('s-sub').textContent = T('Signed in as ', 'Sesión de ') + (store.user() || {}).name + '.';
+    $('tab-a').textContent = T('Change name', 'Cambiar nombre'); $('tab-b').textContent = T('Change password', 'Cambiar contraseña');
+    show('f-name', a); show('f-old', !a); show('f-pass', !a); show('f-rep', !a);
+    $('f-name').firstChild.textContent = T('New name', 'Nombre nuevo');
+    $('f-pass').firstChild.textContent = T('New password', 'Contraseña nueva'); $('f-rep').firstChild.textContent = T('Repeat new password', 'Repite la contraseña nueva');
+    form.pass.autocomplete = 'new-password';
+    if (a) form.name.value = (store.user() || {}).name || '';
+    $('s-go').textContent = a ? T('Save name', 'Guardar nombre') : T('Save password', 'Guardar contraseña');
+    show('s-close', true); show('s-out', true);
+  }
+  ['old', 'pass', 'rep'].forEach((n) => { form[n].value = ''; });
+}
+function openSheet(mode){
+  sheetMode = mode; tab = 'a'; layoutSheet(); sheet.hidden = false;
+  setTimeout(() => (sheetMode === 'auth' || tab === 'a' ? form.name : form.old).focus(), 50);
+}
+function closeSheet(){ sheet.hidden = true; paint('top'); paint('bottom'); }
+$('tab-a').addEventListener('click', () => { tab = 'a'; layoutSheet(); });
+$('tab-b').addEventListener('click', () => { tab = 'b'; layoutSheet(); });
+$('s-close').addEventListener('click', closeSheet);
+$('s-out').addEventListener('click', async () => { await store.logOut(); if (game.mode !== 'menu') quitGame(); openSheet('auth'); paint('top'); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.hidden && sheetMode === 'settings') closeSheet(); });
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = form.name.value.trim(), old = form.old.value, pass = form.pass.value, rep = form.rep.value;
+  const fail = (m) => { err.className = 'err'; err.textContent = m; };
+  const needName = sheetMode === 'auth' || tab === 'a', needPass = sheetMode === 'auth' || tab === 'b';
+  const newPass = (sheetMode === 'auth' && tab === 'b') || (sheetMode === 'settings' && tab === 'b');
+  if (needName && !NAME_OK.test(name)) return fail(T('Names are 3 to 16 letters or numbers.', 'El nombre debe tener de 3 a 16 letras o números.'));
+  if (needPass && pass.length < 6) return fail(T('Passwords need at least 6 characters.', 'La contraseña necesita al menos 6 caracteres.'));
+  if (newPass && pass !== rep) return fail(T("The two passwords don't match.", 'Las dos contraseñas no coinciden.'));
+  $('s-go').disabled = true;
+  try {
+    if (sheetMode === 'auth' && tab === 'a') await store.logIn(name, pass);
+    else if (sheetMode === 'auth') await store.signUp(name, pass);
+    else if (tab === 'a') await store.rename(name);
+    else await store.setPassword(old, pass);
+    if (sheetMode === 'settings'){ err.className = 'err ok'; err.textContent = T('Saved.', 'Guardado.'); $('s-sub').textContent = T('Signed in as ', 'Sesión de ') + store.user().name + '.'; ['old', 'pass', 'rep'].forEach((n) => { form[n].value = ''; }); paint('top'); }
+    else closeSheet();
+  } catch (x) {
+    fail(x === 'confirm' ? T('Sign-ups need email confirmation switched off in Supabase.', 'Falta desactivar la confirmación por email en Supabase.') : x === 'net' ? T('Could not reach the server, try again.', 'No se pudo conectar con el servidor, inténtalo de nuevo.') : x === 'taken' ? T('That name is taken.', 'Ese nombre ya existe.') : x === 'wrong' ? (sheetMode === 'auth' ? T('Wrong name or password.', 'Nombre o contraseña incorrectos.') : T('Current password is wrong.', 'La contraseña actual no es correcta.')) : T('Something went wrong, try again.', 'Algo salió mal, inténtalo de nuevo.'));
+  } finally { $('s-go').disabled = false; }
+});
+
+/* when the console switches on and nobody is signed in, ask */
+const booted = Date.now();
+store.ready.then(() => { paint('top'); if (!store.user()) setTimeout(() => openSheet('auth'), Math.max(0, (reduce ? 0 : 1300) - (Date.now() - booted))); });
