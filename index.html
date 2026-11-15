@@ -119,6 +119,9 @@ h1.typing .caret{animation:none}
 .intro{margin:0;max-width:56ch;font-size:clamp(18px,1.6vw,20px);line-height:1.55}
 /* the wall: photos keep their own shape, in columns like a pinboard. a script shares them out so the columns
    end level (layoutWall); without it they simply stack */
+.arcade{margin-top:clamp(40px,7vw,80px)}
+.arcade .lede{max-width:none;margin:0 0 4px}
+.arcade iframe{display:block;width:100%;height:clamp(420px,62vw,640px);border:0;background:transparent;color-scheme:normal}
 .wall{list-style:none;margin:0;padding:0;columns:4 140px;column-gap:clamp(10px,1.4vw,16px)}
 .wall li{break-inside:avoid;margin:0 0 16px}
 .wall li.sq{aspect-ratio:1}
@@ -244,7 +247,6 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       <a href="#projects" data-nav="projects" data-es="proyectos">projects</a>
       <a href="#about" data-nav="about" data-es="sobre mí">about</a>
       <a href="#ayrton" data-nav="ayrton">ayrton</a>
-      <a href="console.html" data-es="jugar">play</a>
       <button type="button" class="lang" id="lang" aria-label="Ver en español"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/></svg><span data-l="en">en</span><span data-l="es">es</span></button>
     </nav>
     <p class="clocks" aria-label="local time in london and lima">
@@ -408,6 +410,11 @@ h2.sec{margin:0 0 6px;font-family:var(--display);font-weight:700;font-size:clamp
       <li><img src="img/rest/cat-yawn.jpg" alt="My cat lying on the bed, mid-yawn" loading="lazy" width="900" height="1200"><em data-es="ella otra vez">her again</em></li>
       <li class="sq song"><button type="button" data-yt="_t88D1ygVMU" data-start="26" data-end="254" data-preview="https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/96/c4/8d/96c48dab-5a8f-ecb9-0385-7c6724ddd663/mzaf_5827516530338918168.plus.aac.p.m4a" aria-label="Play a part of Cuando pienses en volver by Pedro Suárez-Vértiz"><img src="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/31/ec/e2/31ece2a7-c988-0892-5efa-a58ae9d97895/7751546000322.jpg/600x600bb.jpg" alt="" loading="lazy" width="600" height="600"><span class="play" aria-hidden="true"></span><i class="bar" aria-hidden="true"></i></button><em>Cuando pienses en volver, Pedro Suárez-Vértiz</em></li>
     </ul>
+    <!-- the console, for whoever scrolls all the way down. it runs on its own page (console.html) inside a frame -->
+    <div class="arcade">
+      <p class="lede joke" data-es="// llegaste hasta abajo. juega una partida.">// made it all the way down? play a round.</p>
+      <iframe src="console.html?embed" title="A 3D handheld console with a guess-my-hometown game" loading="lazy"></iframe>
+    </div>
   </section>
   </main>
 

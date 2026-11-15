@@ -15,7 +15,8 @@ const OPEN = THREE.MathUtils.degToRad(-24), SHUT = THREE.MathUtils.degToRad(90);
 
 /* ---------- renderer, scene, camera ---------- */
 const stage = document.getElementById('stage');
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const EMBED = document.documentElement.classList.contains('embed');   /* shown inside the portfolio page */
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: EMBED });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -25,7 +26,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xe7e5e0);
+if (!EMBED) scene.background = new THREE.Color(0xe7e5e0);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
@@ -33,6 +34,7 @@ const camera = new THREE.PerspectiveCamera(28, 1, 1, 4000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.enablePan = false;
+if (EMBED){ controls.enableZoom = false; renderer.domElement.style.touchAction = 'pan-y'; }   /* the page keeps its scroll */
 controls.minDistance = 220; controls.maxDistance = 900;
 controls.minPolarAngle = 0.15; controls.maxPolarAngle = Math.PI / 2 - 0.04;
 controls.target.set(0, 42, 18);
@@ -751,7 +753,9 @@ tickers.push((dt) => {
 /* =========================================================
    apps: maps (the game), rankings (trophy), settings (gear)
    ========================================================= */
+let pendingApp = null;
 function openApp(id){
+  if (!store.user()){ pendingApp = id; openSheet('auth'); return; }   /* sign in first, then the app opens */
   if (id === 'maps') startGame();
   else if (id === 'ranks') openRanks();
   else if (id === 'settings') openSheet('settings');
@@ -831,7 +835,7 @@ function layoutSheet(){
     $('f-pass').firstChild.textContent = T('Password', 'Contraseña'); $('f-rep').firstChild.textContent = T('Repeat password', 'Repite la contraseña');
     form.pass.autocomplete = a ? 'current-password' : 'new-password';
     $('s-go').textContent = a ? T('Log in', 'Entrar') : T('Create account', 'Crear cuenta');
-    show('s-close', false); show('s-out', false);
+    show('s-close', EMBED); show('s-out', false);
   } else {
     $('s-title').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#6c7486" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>' + T('Settings', 'Configuración');
     $('s-sub').textContent = T('Signed in as ', 'Sesión de ') + (store.user() || {}).name + '.';
@@ -853,7 +857,7 @@ function openSheet(mode){
 function closeSheet(){ sheet.hidden = true; paint('top'); paint('bottom'); }
 $('tab-a').addEventListener('click', () => { tab = 'a'; layoutSheet(); });
 $('tab-b').addEventListener('click', () => { tab = 'b'; layoutSheet(); });
-$('s-close').addEventListener('click', closeSheet);
+$('s-close').addEventListener('click', () => { pendingApp = null; closeSheet(); });
 $('s-out').addEventListener('click', async () => { await store.logOut(); if (game.mode !== 'menu') quitGame(); openSheet('auth'); paint('top'); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.hidden && sheetMode === 'settings') closeSheet(); });
 
@@ -873,7 +877,7 @@ form.addEventListener('submit', async (e) => {
     else if (tab === 'a') await store.rename(name);
     else await store.setPassword(old, pass);
     if (sheetMode === 'settings'){ err.className = 'err ok'; err.textContent = T('Saved.', 'Guardado.'); $('s-sub').textContent = T('Signed in as ', 'Sesión de ') + store.user().name + '.'; ['old', 'pass', 'rep'].forEach((n) => { form[n].value = ''; }); paint('top'); }
-    else closeSheet();
+    else { closeSheet(); if (pendingApp){ const a = pendingApp; pendingApp = null; openApp(a); } }
   } catch (x) {
     fail(x === 'confirm' ? T('Sign-ups need email confirmation switched off in Supabase.', 'Falta desactivar la confirmación por email en Supabase.') : x === 'net' ? T('Could not reach the server, try again.', 'No se pudo conectar con el servidor, inténtalo de nuevo.') : x === 'taken' ? T('That name is taken.', 'Ese nombre ya existe.') : x === 'wrong' ? (sheetMode === 'auth' ? T('Wrong name or password.', 'Nombre o contraseña incorrectos.') : T('Current password is wrong.', 'La contraseña actual no es correcta.')) : T('Something went wrong, try again.', 'Algo salió mal, inténtalo de nuevo.'));
   } finally { $('s-go').disabled = false; }
@@ -881,4 +885,4 @@ form.addEventListener('submit', async (e) => {
 
 /* when the console switches on and nobody is signed in, ask */
 const booted = Date.now();
-store.ready.then(() => { paint('top'); if (!store.user()) setTimeout(() => openSheet('auth'), Math.max(0, (reduce ? 0 : 1300) - (Date.now() - booted))); });
+store.ready.then(() => { paint('top'); if (!store.user() && !EMBED) setTimeout(() => openSheet('auth'), Math.max(0, (reduce ? 0 : 1300) - (Date.now() - booted))); });
