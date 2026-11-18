@@ -273,7 +273,10 @@ function buildAvatar(raw, canvas, tex){
   const a = avatarOf(raw), grp = new THREE.Group();
   const skin = pickc(AV.skin, a.skin), hc = pickc(AV.hairColor, a.hairColor), sh = pickc(AV.shirt, a.shirt);
   const fs = [[1, 1.02, 1], [0.92, 1.12, 0.95], [1.1, 0.95, 1]][a.face % 3];
-  const head = new THREE.Group(); grp.add(head);
+  /* proportions: a big head, but not too big; the body is built small and scaled up a bit */
+  const HEAD = 0.8, BODY = 1.18;
+  const head = new THREE.Group(); head.scale.setScalar(HEAD); head.position.y = -0.25; grp.add(head);
+  const bodyG = new THREE.Group(); bodyG.scale.setScalar(BODY); grp.add(bodyG);
   paintFace(canvas.getContext('2d'), canvas.width, canvas.height, a, false); tex.needsUpdate = true;
   const unit = new THREE.Group(); unit.scale.set(...fs); head.add(unit);   /* hair, hats and glasses stretch with the head */
   const skull = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55, envMapIntensity: 0.5 }));
@@ -311,20 +314,20 @@ function buildAvatar(raw, canvas, tex){
   }
   /* body: small, under the big head. 0 = man (broader, straight), 1 = woman (narrower shoulders, a waist and a skirt) */
   const shirtM = mat(sh, 0.75), pantsM = mat('#34405a', 0.8), shoeM = mat('#f4f4f2', 0.6), woman = a.body === 1;
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(woman ? 0.17 : 0.2, woman ? 0.19 : 0.22, 0.3, 16), skinM); neck.position.y = -1.08; grp.add(neck);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(woman ? 0.17 : 0.2, woman ? 0.19 : 0.22, 0.3, 16), skinM); neck.position.y = -1.08; bodyG.add(neck);
   if (!woman){
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.22, 1, 0.88); torso.position.y = -1.62; grp.add(torso);
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.22, 1, 0.88); torso.position.y = -1.62; bodyG.add(torso);
   } else {
-    const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.22, 8, 24), shirtM); chest.scale.set(1.05, 1, 0.82); chest.position.y = -1.5; grp.add(chest);
-    const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.22, 24), shirtM); waist.position.y = -1.8; grp.add(waist);
-    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.52, 0.42, 28, 1, true), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade(sh, 0.72)), roughness: 0.8, side: THREE.DoubleSide, envMapIntensity: 0.6 })); skirt.position.y = -2.08; grp.add(skirt);
+    const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.22, 8, 24), shirtM); chest.scale.set(1.05, 1, 0.82); chest.position.y = -1.5; bodyG.add(chest);
+    const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.22, 24), shirtM); waist.position.y = -1.8; bodyG.add(waist);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.52, 0.42, 28, 1, true), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade(sh, 0.72)), roughness: 0.8, side: THREE.DoubleSide, envMapIntensity: 0.6 })); skirt.position.y = -2.08; bodyG.add(skirt);
   }
   [-1, 1].forEach((d) => {
     const sx = woman ? 0.5 : 0.64;
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.11 : 0.13, 0.5, 6, 12), shirtM); arm.position.set(d * sx, -1.66, 0); arm.rotation.z = d * (woman ? 0.22 : 0.32); grp.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.12 : 0.14, 16, 12), skinM); hand.position.set(d * (sx + (woman ? 0.08 : 0.13)), -2.02, 0.02); grp.add(hand);
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.12 : 0.15, woman ? 0.32 : 0.4, 6, 12), woman ? skinM : pantsM); leg.position.set(d * (woman ? 0.17 : 0.2), woman ? -2.42 : -2.35, 0); grp.add(leg);
-    const shoe = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.16 : 0.19, 16, 12), woman ? mat(shade(sh, 0.6), 0.5) : shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * (woman ? 0.17 : 0.2), -2.68, 0.08); grp.add(shoe);
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.11 : 0.13, 0.5, 6, 12), shirtM); arm.position.set(d * sx, -1.66, 0); arm.rotation.z = d * (woman ? 0.22 : 0.32); bodyG.add(arm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.12 : 0.14, 16, 12), skinM); hand.position.set(d * (sx + (woman ? 0.08 : 0.13)), -2.02, 0.02); bodyG.add(hand);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.12 : 0.15, woman ? 0.32 : 0.4, 6, 12), woman ? skinM : pantsM); leg.position.set(d * (woman ? 0.17 : 0.2), woman ? -2.42 : -2.35, 0); bodyG.add(leg);
+    const shoe = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.16 : 0.19, 16, 12), woman ? mat(shade(sh, 0.6), 0.5) : shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * (woman ? 0.17 : 0.2), -2.68, 0.08); bodyG.add(shoe);
   });
   grp.userData = { head, look: a };
   return grp;
@@ -334,9 +337,9 @@ function disposeTree(o){ o.traverse((m) => { if (m.geometry) m.geometry.dispose(
 /* framings: whole little body, or just the head */
 function frame(cam, mode, aspect){
   cam.aspect = aspect;
-  if (mode === 'face'){ cam.fov = 26; cam.position.set(0, 0.05, 5.6); cam.lookAt(0, 0.0, 0); }
-  else if (mode === 'bust'){ cam.fov = 26; cam.position.set(0, -0.35, 7.4); cam.lookAt(0, -0.35, 0); }
-  else { cam.fov = 26; cam.position.set(0, -0.75, 10.5); cam.lookAt(0, -0.8, 0); }
+  if (mode === 'face'){ cam.fov = 26; cam.position.set(0, -0.2, 4.6); cam.lookAt(0, -0.24, 0); }
+  else if (mode === 'bust'){ cam.fov = 26; cam.position.set(0, -0.6, 6.6); cam.lookAt(0, -0.6, 0); }
+  else { cam.fov = 26; cam.position.set(0, -1.1, 10.8); cam.lookAt(0, -1.15, 0); }
   cam.updateProjectionMatrix();
 }
 
@@ -1181,7 +1184,7 @@ function drawAvatarBottom(g, w, h){
     else {
       const look = Object.assign({}, ed.draft, { [tab.key]: i });
       g.save(); g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.w * 0.2); g.clip();
-      drawAvatar(g, r.x + r.w / 2, r.y + r.h / 2, r.w * 1.02, look, tab.view); g.restore();
+      drawAvatar(g, r.x + r.w / 2, r.y + r.h / 2, r.w * (tab.view === 'body' ? 1.45 : 1.02), look, tab.view); g.restore();
     }
     if (ed.draft[tab.key] === i) brackets(g, r.x, r.y, r.w);
   }
