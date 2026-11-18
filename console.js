@@ -275,7 +275,7 @@ function buildAvatar(raw, canvas, tex){
   const fs = [[1, 1.02, 1], [0.92, 1.12, 0.95], [1.1, 0.95, 1]][a.face % 3];
   /* proportions: a big head, but not too big; the body is built small and scaled up a bit */
   const HEAD = 0.8, BODY = 1.18;
-  const head = new THREE.Group(); head.scale.setScalar(HEAD); head.position.y = -0.25; grp.add(head);
+  const head = new THREE.Group(); head.scale.setScalar(HEAD); head.position.y = -0.4;   /* sits right on the shoulders */ grp.add(head);
   const bodyG = new THREE.Group(); bodyG.scale.setScalar(BODY); grp.add(bodyG);
   paintFace(canvas.getContext('2d'), canvas.width, canvas.height, a, false); tex.needsUpdate = true;
   const unit = new THREE.Group(); unit.scale.set(...fs); head.add(unit);   /* hair, hats and glasses stretch with the head */
@@ -314,7 +314,7 @@ function buildAvatar(raw, canvas, tex){
   }
   /* body: small, under the big head. 0 = man (broader, straight), 1 = woman (narrower shoulders, a waist and a skirt) */
   const shirtM = mat(sh, 0.75), pantsM = mat('#34405a', 0.8), shoeM = mat('#f4f4f2', 0.6), woman = a.body === 1;
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(woman ? 0.17 : 0.2, woman ? 0.19 : 0.22, 0.3, 16), skinM); neck.position.y = -1.08; bodyG.add(neck);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(woman ? 0.15 : 0.18, woman ? 0.18 : 0.21, 0.22, 16), skinM); neck.position.y = -1.0;   /* short, mostly hidden under the head */ bodyG.add(neck);
   if (!woman){
     const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.22, 1, 0.88); torso.position.y = -1.62; bodyG.add(torso);
   } else {
@@ -337,9 +337,9 @@ function disposeTree(o){ o.traverse((m) => { if (m.geometry) m.geometry.dispose(
 /* framings: whole little body, or just the head */
 function frame(cam, mode, aspect){
   cam.aspect = aspect;
-  if (mode === 'face'){ cam.fov = 26; cam.position.set(0, -0.2, 4.6); cam.lookAt(0, -0.24, 0); }
-  else if (mode === 'bust'){ cam.fov = 26; cam.position.set(0, -0.6, 6.6); cam.lookAt(0, -0.6, 0); }
-  else { cam.fov = 26; cam.position.set(0, -1.1, 10.8); cam.lookAt(0, -1.15, 0); }
+  if (mode === 'face'){ cam.fov = 26; cam.position.set(0, -0.36, 4.6); cam.lookAt(0, -0.4, 0); }
+  else if (mode === 'bust'){ cam.fov = 26; cam.position.set(0, -0.75, 6.6); cam.lookAt(0, -0.75, 0); }
+  else { cam.fov = 26; cam.position.set(0, -1.2, 10.4); cam.lookAt(0, -1.25, 0); }
   cam.updateProjectionMatrix();
 }
 
