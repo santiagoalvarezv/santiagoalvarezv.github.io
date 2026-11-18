@@ -205,9 +205,9 @@ const AV = {
   skin:  ['#fde3cf', '#f6cda6', '#e8b184', '#cf8f5c', '#9c6038', '#62391d'],
   hairColor: ['#24201e', '#4f3020', '#8a5a2e', '#d9a95c', '#f0dfa1', '#b8392d', '#9097a1', '#3b5bdb'],
   shirt: ['#3f74ea', '#e8463a', '#3fb27f', '#f2a91c', '#8e5bd8', '#2a3142', '#ff8fb3', '#f4f4f2'],
-  body: 2, face: 3, hair: 8, brows: 4, eyes: 6, nose: 3, mouth: 6, glasses: 4, hat: 3,
+  body: 2, build: 4, face: 3, hair: 8, brows: 4, eyes: 6, nose: 3, mouth: 6, glasses: 4, hat: 3,
 };
-const AVATAR_DEFAULT = { body: 0, face: 0, skin: 1, hair: 0, hairColor: 1, brows: 0, eyes: 0, nose: 0, mouth: 0, glasses: 0, hat: 0, shirt: 0 };
+const AVATAR_DEFAULT = { body: 0, build: 1, face: 0, skin: 1, hair: 0, hairColor: 1, brows: 0, eyes: 0, nose: 0, mouth: 0, glasses: 0, hat: 0, shirt: 0 };
 function avatarOf(a){ const o = Object.assign({}, AVATAR_DEFAULT); if (a) for (const k in o) if (Number.isInteger(a[k]) && a[k] >= 0) o[k] = a[k]; return o; }
 function shade(hex, f){ const n = parseInt(hex.slice(1), 16), c = (v) => Math.max(0, Math.min(255, Math.round(v * f))); return 'rgb(' + c(n >> 16) + ',' + c((n >> 8) & 255) + ',' + c(n & 255) + ')'; }
 const pickc = (arr, i) => arr[i % arr.length];
@@ -314,20 +314,21 @@ function buildAvatar(raw, canvas, tex){
   }
   /* body: small, under the big head. 0 = man (broader, straight), 1 = woman (narrower shoulders, a waist and a skirt) */
   const shirtM = mat(sh, 0.75), pantsM = mat('#34405a', 0.8), shoeM = mat('#f4f4f2', 0.6), woman = a.body === 1;
+  const k = [0.74, 0.86, 1.0, 1.2][a.build % 4];   /* build: slim, regular, sturdy, round */
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(woman ? 0.15 : 0.18, woman ? 0.18 : 0.21, 0.22, 16), skinM); neck.position.y = -1.0;   /* short, mostly hidden under the head */ bodyG.add(neck);
   if (!woman){
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.22, 1, 0.88); torso.position.y = -1.62; bodyG.add(torso);
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.22 * k, 1, 0.88 * k); torso.position.y = -1.62; bodyG.add(torso);
   } else {
-    const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.22, 8, 24), shirtM); chest.scale.set(1.05, 1, 0.82); chest.position.y = -1.5; bodyG.add(chest);
-    const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.22, 24), shirtM); waist.position.y = -1.8; bodyG.add(waist);
-    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.52, 0.42, 28, 1, true), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade(sh, 0.72)), roughness: 0.8, side: THREE.DoubleSide, envMapIntensity: 0.6 })); skirt.position.y = -2.08; bodyG.add(skirt);
+    const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.22, 8, 24), shirtM); chest.scale.set(1.05 * k, 1, 0.82 * k); chest.position.y = -1.5; bodyG.add(chest);
+    const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.22, 24), shirtM); waist.scale.set(k, 1, k); waist.position.y = -1.8; bodyG.add(waist);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.52, 0.42, 28, 1, true), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade(sh, 0.72)), roughness: 0.8, side: THREE.DoubleSide, envMapIntensity: 0.6 })); skirt.scale.set(0.85 + 0.15 * k, 1, 0.85 + 0.15 * k); skirt.position.y = -2.08; bodyG.add(skirt);
   }
   [-1, 1].forEach((d) => {
-    const sx = woman ? 0.5 : 0.64;
+    const sx = woman ? 0.38 * k + 0.12 : 0.51 * k + 0.13;   /* arms hang just outside the torso */
     const arm = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.11 : 0.13, 0.5, 6, 12), shirtM); arm.position.set(d * sx, -1.66, 0); arm.rotation.z = d * (woman ? 0.22 : 0.32); bodyG.add(arm);
     const hand = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.12 : 0.14, 16, 12), skinM); hand.position.set(d * (sx + (woman ? 0.08 : 0.13)), -2.02, 0.02); bodyG.add(hand);
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.12 : 0.15, woman ? 0.32 : 0.4, 6, 12), woman ? skinM : pantsM); leg.position.set(d * (woman ? 0.17 : 0.2), woman ? -2.42 : -2.35, 0); bodyG.add(leg);
-    const shoe = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.16 : 0.19, 16, 12), woman ? mat(shade(sh, 0.6), 0.5) : shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * (woman ? 0.17 : 0.2), -2.68, 0.08); bodyG.add(shoe);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry((woman ? 0.12 : 0.15) * (0.85 + 0.15 * k), woman ? 0.32 : 0.4, 6, 12), woman ? skinM : pantsM); leg.position.set(d * (woman ? 0.17 : 0.2) * (0.8 + 0.2 * k), woman ? -2.42 : -2.35, 0); bodyG.add(leg);
+    const shoe = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.16 : 0.19, 16, 12), woman ? mat(shade(sh, 0.6), 0.5) : shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * (woman ? 0.17 : 0.2) * (0.8 + 0.2 * k), -2.68, 0.08); bodyG.add(shoe);
   });
   grp.userData = { head, look: a };
   return grp;
@@ -1094,7 +1095,7 @@ store.ready.then(() => { paint('top'); if (!store.user() && !EMBED) setTimeout((
 
 /* ---------- avatar editor: parts on the touch screen, the character alive in 3D on the top screen ---------- */
 const AV_TABS = [
-  { key: 'body', en: 'Body', es: 'Cuerpo', n: AV.body, view: 'body' },
+  { key: 'body', en: 'Body', es: 'Cuerpo', n: 8, view: 'body', both: true },   /* top row: man slim to round, bottom row: woman */
   { key: 'face', en: 'Face', es: 'Cara', n: AV.face, view: 'face' },
   { key: 'skin', en: 'Skin', es: 'Piel', n: AV.skin.length, color: AV.skin },
   { key: 'hair', en: 'Hair', es: 'Pelo', n: AV.hair, view: 'face' },
@@ -1182,11 +1183,11 @@ function drawAvatarBottom(g, w, h){
     shadowed(g, () => { g.fillStyle = '#fff'; g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.w * 0.2); g.fill(); }, r.w * 0.1, r.w * 0.03);
     if (tab.color){ g.fillStyle = tab.color[i]; g.beginPath(); g.arc(r.x + r.w / 2, r.y + r.h / 2, r.w * 0.3, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 2; g.stroke(); }
     else {
-      const look = Object.assign({}, ed.draft, { [tab.key]: i });
+      const look = tab.both ? Object.assign({}, ed.draft, { body: i >> 2, build: i & 3 }) : Object.assign({}, ed.draft, { [tab.key]: i });
       g.save(); g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.w * 0.2); g.clip();
-      drawAvatar(g, r.x + r.w / 2, r.y + r.h / 2, r.w * (tab.view === 'body' ? 1.45 : 1.02), look, tab.view); g.restore();
+      drawAvatar(g, r.x + r.w / 2, r.y + r.h / 2, r.w * (tab.view === 'body' ? 1.2 : 1.02), look, tab.view); g.restore();
     }
-    if (ed.draft[tab.key] === i) brackets(g, r.x, r.y, r.w);
+    if ((tab.both ? ed.draft.body * 4 + ed.draft.build : ed.draft[tab.key]) === i) brackets(g, r.x, r.y, r.w);
   }
   const btn = (r, label, main) => {
     shadowed(g, () => { const gr = g.createLinearGradient(0, r.y, 0, r.y + r.h); gr.addColorStop(0, main ? '#6b9bff' : '#ffffff'); gr.addColorStop(1, main ? '#3f74ea' : '#e4e8ef'); g.fillStyle = gr; g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.h * 0.35); g.fill(); }, 8, 2);
@@ -1212,7 +1213,7 @@ function avatarClick(t){
     return;
   }
   if (t.tab != null) ed.tab = t.tab;
-  if (t.opt != null){ ed.draft[AV_TABS[ed.tab].key] = t.opt; rebuildLive(); }
+  if (t.opt != null){ const tb = AV_TABS[ed.tab]; if (tb.both){ ed.draft.body = t.opt >> 2; ed.draft.build = t.opt & 3; } else ed.draft[tb.key] = t.opt; rebuildLive(); }
   paint('bottom');
 }
 /* ---------- the physical buttons work too ----------
