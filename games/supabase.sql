@@ -71,3 +71,18 @@ end $$;
 revoke execute on function public.add_points(integer), public.rename(text) from public, anon;
 grant execute on function public.add_points(integer), public.rename(text) to authenticated;
 grant execute on function public.login_email(text), public.name_taken(text) to anon, authenticated;
+
+-- avatars (added later): each player's character, a few small numbers, shown in the ranking
+alter table public.profiles add column if not exists avatar jsonb;
+create or replace view public.ranking as
+  select name, points, games, avatar from public.profiles order by points desc;
+grant select on public.ranking to anon, authenticated;
+create or replace function public.set_avatar(a jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if jsonb_typeof(a) <> 'object' or octet_length(a::text) > 300 then raise exception 'bad avatar'; end if;
+  update public.profiles set avatar = a where id = auth.uid();
+end $$;
+revoke execute on function public.set_avatar(jsonb) from public, anon;
+grant execute on function public.set_avatar(jsonb) to authenticated;

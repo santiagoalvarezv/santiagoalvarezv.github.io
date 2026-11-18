@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js?v=4';
+import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js?v=6';
 
 /* ---------- sizes (mm), roughly a big-screen clamshell handheld ---------- */
 const W = 156, D = 93;          /* width and depth of each half */
@@ -128,7 +128,8 @@ function localStore(){
   const remember = (k) => { me = k; try { localStorage.setItem(SES, k); } catch (e) {} };
   return {
     shared: false, ready: Promise.resolve(),
-    user(){ const u = read()[me]; return u ? { name: u.name, points: u.points, games: u.games || 0 } : null; },
+    user(){ const u = read()[me]; return u ? { name: u.name, points: u.points, games: u.games || 0, avatar: u.avatar || null } : null; },
+    async setAvatar(a){ const u = read(); if (!u[me]) return; u[me].avatar = a; write(u); },
     async signUp(name, pass){
       const u = read(), k = key(name); if (u[k]) throw 'taken';
       const sl = salt(); u[k] = { name: name.trim(), salt: sl, hash: await hash(pass, sl), points: 0, games: 0 }; write(u); remember(k);
@@ -136,7 +137,7 @@ function localStore(){
     async logIn(name, pass){ const r = read()[key(name)]; if (!r || await hash(pass, r.salt) !== r.hash) throw 'wrong'; remember(key(name)); },
     async logOut(){ me = null; try { localStorage.removeItem(SES); } catch (e) {} },
     async addPoints(n){ const u = read(); if (!u[me]) return; u[me].points += n; u[me].games = (u[me].games || 0) + 1; write(u); },
-    async ranking(){ return Object.values(read()).map((r) => ({ name: r.name, points: r.points })).sort((a, b) => b.points - a.points); },
+    async ranking(){ return Object.values(read()).map((r) => ({ name: r.name, points: r.points, avatar: r.avatar || null })).sort((a, b) => b.points - a.points); },
     async rename(name){
       const u = read(), k = key(name); if (k !== me && u[k]) throw 'taken';
       const r = u[me]; delete u[me]; r.name = name.trim(); u[k] = r; write(u); remember(k);
@@ -154,7 +155,7 @@ function supabaseStore(url, anon){
   async function load(){
     const { data } = await sb.auth.getSession();
     if (!data.session){ profile = null; return; }
-    const r = await sb.from('profiles').select('name, points, games, login_email').eq('id', data.session.user.id).maybeSingle();
+    const r = await sb.from('profiles').select('name, points, games, login_email, avatar').eq('id', data.session.user.id).maybeSingle();
     profile = r.data || null;
   }
   const ready = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm')
@@ -162,7 +163,8 @@ function supabaseStore(url, anon){
     .catch(() => { profile = null; });
   return {
     shared: true, ready,
-    user(){ return profile ? { name: profile.name, points: profile.points, games: profile.games } : null; },
+    user(){ return profile ? { name: profile.name, points: profile.points, games: profile.games, avatar: profile.avatar || null } : null; },
+    async setAvatar(a){ const r = await sb.rpc('set_avatar', { a }); if (r.error) fail('net'); await load(); },
     async signUp(name, pass){
       const t = await sb.rpc('name_taken', { p_name: name }); if (t.error) fail('net'); if (t.data) fail('taken');
       const email = crypto.randomUUID() + '@players.santiagoalvarezv.com';
@@ -179,7 +181,7 @@ function supabaseStore(url, anon){
     async logOut(){ await sb.auth.signOut(); profile = null; },
     async addPoints(n){ if (!profile) return; await sb.rpc('add_points', { p: n }); await load(); },
     async ranking(){
-      const r = await sb.from('ranking').select('name, points').order('points', { ascending: false }).limit(50);
+      const r = await sb.from('ranking').select('name, points, avatar').order('points', { ascending: false }).limit(50);
       return r.data || [];
     },
     async rename(name){
@@ -195,10 +197,171 @@ function supabaseStore(url, anon){
 }
 const store = SUPABASE_URL && SUPABASE_KEY ? supabaseStore(SUPABASE_URL, SUPABASE_KEY) : localStore();
 
+/* ---------- the avatar: a big-headed little character in 3D ----------
+   a smooth head with the face painted on, hair and hats as soft shapes, a small body.
+   one scene renders it: live on the top screen while editing, and as small snapshots everywhere else. */
+const AV = {
+  skin:  ['#fde3cf', '#f6cda6', '#e8b184', '#cf8f5c', '#9c6038', '#62391d'],
+  hairColor: ['#24201e', '#4f3020', '#8a5a2e', '#d9a95c', '#f0dfa1', '#b8392d', '#9097a1', '#3b5bdb'],
+  shirt: ['#3f74ea', '#e8463a', '#3fb27f', '#f2a91c', '#8e5bd8', '#2a3142', '#ff8fb3', '#f4f4f2'],
+  face: 3, hair: 8, brows: 4, eyes: 6, nose: 3, mouth: 6, glasses: 4, hat: 3,
+};
+const AVATAR_DEFAULT = { face: 0, skin: 1, hair: 0, hairColor: 1, brows: 0, eyes: 0, nose: 0, mouth: 0, glasses: 0, hat: 0, shirt: 0 };
+function avatarOf(a){ const o = Object.assign({}, AVATAR_DEFAULT); if (a) for (const k in o) if (Number.isInteger(a[k]) && a[k] >= 0) o[k] = a[k]; return o; }
+function shade(hex, f){ const n = parseInt(hex.slice(1), 16), c = (v) => Math.max(0, Math.min(255, Math.round(v * f))); return 'rgb(' + c(n >> 16) + ',' + c((n >> 8) & 255) + ',' + c(n & 255) + ')'; }
+const pickc = (arr, i) => arr[i % arr.length];
+
+/* the face is painted on a canvas wrapped round the head; the front of the head is u = 0.25 of the texture */
+function paintFace(g, W, H, a, blink){
+  const skin = pickc(AV.skin, a.skin), hc = pickc(AV.hairColor, a.hairColor);
+  g.fillStyle = skin; g.fillRect(0, 0, W, H);
+  const fx = W * 0.25, u = W / 1024;   /* face centre x, and one unit at 1024 wide */
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  /* cheeks */
+  g.fillStyle = 'rgba(244,120,110,.22)';
+  [-1, 1].forEach((d) => { g.beginPath(); g.ellipse(fx + d * 74 * u, 300 * u, 26 * u, 15 * u, 0, 0, Math.PI * 2); g.fill(); });
+  /* brows */
+  g.strokeStyle = shade(hc, 0.95); g.fillStyle = shade(hc, 0.95);
+  [-1, 1].forEach((d) => {
+    const x0 = fx + d * 22 * u, x1 = fx + d * 70 * u, y = 196 * u;
+    g.lineWidth = (a.brows === 2 ? 11 : a.brows === 3 ? 4 : 7) * u;
+    g.beginPath(); g.moveTo(x0, y + (a.brows === 3 ? -6 : 0) * u);
+    if (a.brows === 1) g.quadraticCurveTo((x0 + x1) / 2, y - 14 * u, x1, y + 2 * u);
+    else g.lineTo(x1, y - (a.brows === 3 ? 12 : 3) * u);
+    g.stroke();
+  });
+  /* eyes */
+  [-1, 1].forEach((d) => {
+    const x = fx + d * 46 * u, y = 244 * u;
+    g.fillStyle = '#231d1b'; g.strokeStyle = '#231d1b'; g.lineWidth = 6 * u;
+    if (blink || a.eyes === 2){ g.beginPath(); g.arc(x, y + (blink ? 0 : 8) * u, 14 * u, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); return; }
+    if (a.eyes === 0){ g.beginPath(); g.ellipse(x, y, 10 * u, 15 * u, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x + 3 * u, y - 5 * u, 3.6 * u, 0, Math.PI * 2); g.fill(); }
+    if (a.eyes === 1){ g.fillStyle = '#fff'; g.beginPath(); g.ellipse(x, y, 17 * u, 15 * u, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#5a3a22'; g.beginPath(); g.arc(x + 2 * u, y + 1 * u, 9 * u, 0, Math.PI * 2); g.fill(); g.fillStyle = '#16100e'; g.beginPath(); g.arc(x + 2 * u, y + 1 * u, 5 * u, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x + 5 * u, y - 3 * u, 2.4 * u, 0, Math.PI * 2); g.fill(); }
+    if (a.eyes === 3){ g.beginPath(); g.arc(x, y, 6 * u, 0, Math.PI * 2); g.fill(); }
+    if (a.eyes === 4){ g.beginPath(); g.ellipse(x, y, 13 * u, 11 * u, 0, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(x + d * 10 * u, y - 8 * u); g.lineTo(x + d * 19 * u, y - 14 * u); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x + 4 * u, y - 4 * u, 3 * u, 0, Math.PI * 2); g.fill(); }
+    if (a.eyes === 5){ g.beginPath(); g.ellipse(x, y + 3 * u, 11 * u, 9 * u, 0, 0, Math.PI); g.fill(); g.beginPath(); g.moveTo(x - 14 * u, y + 2 * u); g.lineTo(x + 14 * u, y + 2 * u); g.stroke(); }
+  });
+  /* nose */
+  g.strokeStyle = shade(skin, 0.72); g.fillStyle = shade(skin, 0.86); g.lineWidth = 5 * u;
+  if (a.nose === 0){ g.beginPath(); g.arc(fx, 282 * u, 9 * u, Math.PI * 0.15, Math.PI * 0.85); g.stroke(); }
+  if (a.nose === 1){ g.beginPath(); g.ellipse(fx, 284 * u, 13 * u, 9 * u, 0, 0, Math.PI * 2); g.fill(); }
+  if (a.nose === 2){ g.beginPath(); g.moveTo(fx - 2 * u, 258 * u); g.lineTo(fx + 8 * u, 286 * u); g.lineTo(fx - 6 * u, 290 * u); g.stroke(); }
+  /* mouth */
+  const my = 330 * u; g.strokeStyle = '#8a3b33'; g.fillStyle = '#8a3b33'; g.lineWidth = 6 * u;
+  if (a.mouth === 0){ g.beginPath(); g.arc(fx, my - 16 * u, 26 * u, Math.PI * 0.22, Math.PI * 0.78); g.stroke(); }
+  if (a.mouth === 1){ g.beginPath(); g.moveTo(fx - 28 * u, my - 6 * u); g.quadraticCurveTo(fx, my + 34 * u, fx + 28 * u, my - 6 * u); g.closePath(); g.fill(); g.fillStyle = '#fff'; g.fillRect(fx - 20 * u, my - 6 * u, 40 * u, 7 * u); }
+  if (a.mouth === 2){ g.beginPath(); g.moveTo(fx - 18 * u, my); g.lineTo(fx + 18 * u, my); g.stroke(); }
+  if (a.mouth === 3){ g.beginPath(); g.ellipse(fx, my, 9 * u, 12 * u, 0, 0, Math.PI * 2); g.fill(); }
+  if (a.mouth === 4){ g.beginPath(); g.moveTo(fx - 20 * u, my + 2 * u); g.quadraticCurveTo(fx + 6 * u, my + 10 * u, fx + 24 * u, my - 10 * u); g.stroke(); }
+  if (a.mouth === 5){ g.beginPath(); g.moveTo(fx - 30 * u, my - 8 * u); g.lineTo(fx + 30 * u, my - 8 * u); g.quadraticCurveTo(fx + 28 * u, my + 30 * u, fx, my + 30 * u); g.quadraticCurveTo(fx - 28 * u, my + 30 * u, fx - 30 * u, my - 8 * u); g.fill(); g.fillStyle = '#e66a6a'; g.beginPath(); g.ellipse(fx, my + 18 * u, 14 * u, 8 * u, 0, 0, Math.PI * 2); g.fill(); }
+}
+
+const avScene = new THREE.Scene();
+avScene.environment = scene.environment;
+avScene.add(new THREE.HemisphereLight(0xffffff, 0xcfd8e6, 1.1));
+const avKey = new THREE.DirectionalLight(0xffffff, 1.5); avKey.position.set(-2.5, 4, 5); avScene.add(avKey);
+const avRim = new THREE.DirectionalLight(0xbfdcff, 0.8); avRim.position.set(3, 2, -3); avScene.add(avRim);
+const avCam = new THREE.PerspectiveCamera(26, 1, 0.1, 100);
+const faceCanvas = document.createElement('canvas'); faceCanvas.width = 1024; faceCanvas.height = 512;
+const faceTex = new THREE.CanvasTexture(faceCanvas); faceTex.colorSpace = THREE.SRGBColorSpace; faceTex.anisotropy = 8;
+let avRig = null, avLook = null;
+
+function mat(hex, rough){ return new THREE.MeshStandardMaterial({ color: new THREE.Color(hex), roughness: rough == null ? 0.6 : rough, envMapIntensity: 0.6 }); }
+/* builds the character for a look; the face canvas is shared and repainted */
+function buildAvatar(raw, canvas, tex){
+  const a = avatarOf(raw), grp = new THREE.Group();
+  const skin = pickc(AV.skin, a.skin), hc = pickc(AV.hairColor, a.hairColor), sh = pickc(AV.shirt, a.shirt);
+  const fs = [[1, 1.02, 1], [0.92, 1.12, 0.95], [1.1, 0.95, 1]][a.face % 3];
+  const head = new THREE.Group(); grp.add(head);
+  paintFace(canvas.getContext('2d'), canvas.width, canvas.height, a, false); tex.needsUpdate = true;
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55, envMapIntensity: 0.5 }));
+  skull.scale.set(...fs); head.add(skull);
+  const skinM = mat(skin, 0.55);
+  [-1, 1].forEach((d) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 16), skinM); e.scale.set(0.8, 1.15, 0.6); e.position.set(d * 0.98 * fs[0], -0.02, 0.02); head.add(e); });
+  const hairM = mat(hc, 0.62);
+  const cap = (r, theta, tilt) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 48, 24, 0, Math.PI * 2, 0, theta), hairM); m.scale.set(fs[0], fs[1], fs[2]); m.rotation.x = -(tilt + 0.12); return m; };
+  if (a.hat === 0){
+    if (a.hair === 0) head.add(cap(1.05, 1.78, 0.62));
+    if (a.hair === 1){ head.add(cap(1.05, 1.62, 0.62)); for (let i = 0; i < 9; i++){ const c = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 12), hairM); const t = -1 + (i / 8) * 2; c.position.set(t * 0.7 * fs[0], 0.95 * fs[1] - Math.abs(t) * 0.25, -0.1 + (i % 2) * 0.25); c.rotation.z = -t * 0.6; c.rotation.x = -0.25; head.add(c); } }
+    if (a.hair === 2){ head.add(cap(1.05, 1.85, 0.55)); const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.85, 1.0, 8, 24), hairM); back.scale.set(1.12 * fs[0], 1, 0.55); back.position.set(0, -0.55, -0.42); head.add(back); }
+    if (a.hair === 3){ head.add(cap(1.05, 1.78, 0.62)); const bun = new THREE.Mesh(new THREE.SphereGeometry(0.38, 24, 16), hairM); bun.position.set(0, 1.05 * fs[1], -0.35); head.add(bun); }
+    if (a.hair === 4){ for (let i = 0; i < 46; i++){ const phi = Math.acos(1 - (i + 0.5) / 46 * 1.15), th = i * 2.399; const v = new THREE.Vector3(Math.sin(phi) * Math.cos(th), Math.cos(phi), Math.sin(phi) * Math.sin(th)); if (v.z > 0.55 && v.y < 0.75) continue; const b = new THREE.Mesh(new THREE.SphereGeometry(0.27, 16, 12), hairM); b.position.set(v.x * 1.02 * fs[0], v.y * 1.02 * fs[1], v.z * 1.02 * fs[2]); head.add(b); } }
+    if (a.hair === 6){ head.add(cap(1.05, 1.78, 0.48)); const fr = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 20), hairM); fr.scale.set(1.05, 0.38, 0.5); fr.position.set(-0.28, 0.6 * fs[1], 0.66 * fs[2]); fr.rotation.z = -0.4; head.add(fr); }
+    if (a.hair === 7){ const m = cap(1.02, 1.72, 0.66); head.add(m); }
+  } else {
+    const hatM = mat(a.hat === 1 ? '#e8463a' : '#3b4a6b', 0.7);
+    if (a.hair === 2){ const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.85, 1.0, 8, 24), hairM); back.scale.set(1.12 * fs[0], 1, 0.55); back.position.set(0, -0.55, -0.42); head.add(back); }
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1.1, 48, 24, 0, Math.PI * 2, 0, a.hat === 1 ? 1.2 : 1.35), hatM); dome.scale.set(fs[0], fs[1], fs[2]); dome.rotation.x = -0.3; head.add(dome);
+    if (a.hat === 1){ const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.06, 32, 1, false, -Math.PI / 2, Math.PI), hatM); brim.position.set(0, 0.55 * fs[1], 0.62 * fs[2]); brim.rotation.x = 0.12; brim.scale.set(1, 1, 1.1); head.add(brim); }
+    else { const band = new THREE.Mesh(new THREE.TorusGeometry(1.03, 0.09, 12, 48), hatM); band.rotation.x = Math.PI / 2 - 0.3; band.position.y = 0.35 * fs[1]; band.scale.set(fs[0], fs[2], 1); head.add(band); const pom = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), mat('#f4f4f2', 0.9)); pom.position.set(0, 1.12 * fs[1], -0.3); head.add(pom); }
+  }
+  if (a.glasses){
+    const gm = a.glasses === 3 ? mat('#15171d', 0.2) : mat('#1d1d22', 0.35);
+    [-1, 1].forEach((d) => {
+      const x = d * 0.33 * fs[0], z = 0.99 * fs[2];
+      const ring = a.glasses === 2 ? new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 8, 4), gm) : new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.028, 10, 32), gm);
+      if (a.glasses === 2) ring.rotation.z = Math.PI / 4;
+      ring.position.set(x, 0.0, z); ring.rotation.y = d * -0.32; head.add(ring);
+      if (a.glasses === 3){ const lens = new THREE.Mesh(new THREE.CircleGeometry(0.19, 24), new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.1, metalness: 0.3 })); lens.position.set(x, 0, z + 0.005); lens.rotation.y = d * -0.32; head.add(lens); }
+    });
+    const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 8), gm); bridge.rotation.z = Math.PI / 2; bridge.position.set(0, 0.03, 1.02 * fs[2]); head.add(bridge);
+  }
+  /* body: small, under the big head */
+  const shirtM = mat(sh, 0.75), pantsM = mat('#34405a', 0.8), shoeM = mat('#f4f4f2', 0.6);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.3, 16), skinM); neck.position.y = -1.08; grp.add(neck);
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.15, 1, 0.85); torso.position.y = -1.62; grp.add(torso);
+  [-1, 1].forEach((d) => {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.5, 6, 12), shirtM); arm.position.set(d * 0.6, -1.66, 0); arm.rotation.z = d * 0.32; grp.add(arm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), skinM); hand.position.set(d * 0.73, -2.02, 0.02); grp.add(hand);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.4, 6, 12), pantsM); leg.position.set(d * 0.2, -2.35, 0); grp.add(leg);
+    const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 12), shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * 0.2, -2.68, 0.08); grp.add(shoe);
+  });
+  grp.userData = { head, look: a };
+  return grp;
+}
+function disposeTree(o){ o.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.material && m.material.map !== faceTex && m.material.map !== snapFaceTex) m.material.dispose(); }); }
+
+/* framings: whole little body, or just the head */
+function frame(cam, mode, aspect){
+  cam.aspect = aspect;
+  if (mode === 'face'){ cam.fov = 26; cam.position.set(0, 0.05, 5.6); cam.lookAt(0, 0.0, 0); }
+  else if (mode === 'bust'){ cam.fov = 26; cam.position.set(0, -0.35, 7.4); cam.lookAt(0, -0.35, 0); }
+  else { cam.fov = 26; cam.position.set(0, -0.75, 10.5); cam.lookAt(0, -0.8, 0); }
+  cam.updateProjectionMatrix();
+}
+
+/* small pictures of a look, for the menu tiles and the ranking (cached) */
+const snapRT = new THREE.WebGLRenderTarget(256, 256, { samples: 4 }); snapRT.texture.colorSpace = THREE.SRGBColorSpace;
+const snapFaceCanvas = document.createElement('canvas'); snapFaceCanvas.width = 1024; snapFaceCanvas.height = 512;
+const snapFaceTex = new THREE.CanvasTexture(snapFaceCanvas); snapFaceTex.colorSpace = THREE.SRGBColorSpace;
+const snapCam = new THREE.PerspectiveCamera(26, 1, 0.1, 100), snapCache = new Map(), snapBuf = new Uint8Array(256 * 256 * 4);
+function avatarSnap(raw, mode){
+  const key = mode + JSON.stringify(avatarOf(raw));
+  if (snapCache.has(key)) return snapCache.get(key);
+  const rig = buildAvatar(raw, snapFaceCanvas, snapFaceTex);
+  if (avRig) avRig.visible = false;
+  avScene.add(rig); frame(snapCam, mode, 1);
+  const bg = avScene.background; avScene.background = null;
+  renderer.setRenderTarget(snapRT); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(avScene, snapCam); renderer.setRenderTarget(null);
+  renderer.readRenderTargetPixels(snapRT, 0, 0, 256, 256, snapBuf);
+  avScene.background = bg; avScene.remove(rig); disposeTree(rig); if (avRig) avRig.visible = true;
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const img = c.getContext('2d').createImageData(256, 256);
+  for (let y = 0; y < 256; y++) img.data.set(snapBuf.subarray((255 - y) * 1024, (256 - y) * 1024), y * 1024);   /* the GPU's rows run bottom up */
+  c.getContext('2d').putImageData(img, 0, 0);
+  if (snapCache.size > 400) snapCache.clear();
+  snapCache.set(key, c);
+  return c;
+}
+/* the old 2D call: now draws a snapshot of the 3D character, s wide, centred at (cx, cy) */
+function drawAvatar(g, cx, cy, s, raw, mode){
+  g.drawImage(avatarSnap(raw, mode || 'bust'), cx - s / 2, cy - s / 2, s, s);
+}
+
 const FONT = '"Arial Rounded MT Bold", "Nunito", "Helvetica Neue", Arial, sans-serif';
 const APPS = [
   { id: 'maps', name: 'Maps', on: true }, { id: 'ranks', name: 'Rankings', on: true }, { id: 'settings', name: 'Settings', on: true },
-  { id: 'camera', name: 'Camera' }, { id: 'music', name: 'Music' }, { id: 'mail', name: 'Mail' }, { id: 'notes', name: 'Notes' }, { id: 'web', name: 'Browser' },
+  { id: 'avatar', name: 'Avatar', on: true }, { id: 'music', name: 'Music' }, { id: 'mail', name: 'Mail' }, { id: 'notes', name: 'Notes' }, { id: 'web', name: 'Browser' },
 ];
 const SELECTED = 'maps';
 
@@ -274,6 +437,8 @@ function drawIcon(g, app, x, y, s){
       tile('#5fd0c5', '#24a59a'); g.strokeStyle = '#fff'; g.lineWidth = u * 0.6;
       g.beginPath(); g.arc(cx, cy, 3.2 * u, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.ellipse(cx, cy, 1.4 * u, 3.2 * u, 0, 0, Math.PI * 2); g.stroke();
       g.beginPath(); g.moveTo(cx - 3.2 * u, cy); g.lineTo(cx + 3.2 * u, cy); g.stroke(); break;
+    case 'avatar':
+      tile('#9fe0ff', '#4fb3ee'); g.save(); g.beginPath(); g.roundRect(ix, iy, is, is, ir); g.clip(); drawAvatar(g, cx, cy, is * 1.05, AVATAR_DEFAULT, 'face'); g.restore(); break;
     case 'ranks':   /* a classic racing cup */
       tile('#ffd866', '#f2a91c'); g.fillStyle = '#fff';
       g.beginPath(); g.moveTo(cx - 2.6 * u, cy - 3.4 * u); g.lineTo(cx + 2.6 * u, cy - 3.4 * u); g.bezierCurveTo(cx + 2.6 * u, cy + 0.6 * u, cx + 1.2 * u, cy + 1.4 * u, cx, cy + 1.4 * u); g.bezierCurveTo(cx - 1.2 * u, cy + 1.4 * u, cx - 2.6 * u, cy + 0.6 * u, cx - 2.6 * u, cy - 3.4 * u); g.fill();
@@ -706,6 +871,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     if (t === 'open') openApp(SELECTED); else if (t && t.on) openApp(t.id);
   } else if (p.kind === 'top' && game.mode === 'game'){
     const i = regionAt(p); if (i != null) pick(i);
+  } else if (game.mode === 'avatar'){
+    if (p.kind === 'bottom') avatarClick(avatarTarget(p));
   } else if (p.kind === 'bottom' && isButton(p)){
     if (game.mode === 'done') startGame(); else quitGame();
   }
@@ -714,7 +881,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   const p = screenAt(e);
   let pointer = false;
   if (p && game.mode === 'menu' && p.kind === 'bottom'){ const t = menuTarget(p); pointer = t === 'open' || !!(t && t.on); }
-  if (p && game.mode !== 'menu' && p.kind === 'bottom') pointer = isButton(p);
+  if (p && game.mode !== 'menu' && p.kind === 'bottom') pointer = game.mode === 'avatar' ? !!avatarTarget(p) : isButton(p);
   if (game.mode === 'game'){
     const i = p && p.kind === 'top' ? regionAt(p) : null;
     if (i !== game.hover && !game.busy){ game.hover = i; paint('top'); }
@@ -759,6 +926,7 @@ function openApp(id){
   if (id === 'maps') startGame();
   else if (id === 'ranks') openRanks();
   else if (id === 'settings') openSheet('settings');
+  else if (id === 'avatar') openAvatar();
 }
 
 /* ---------- rankings: everyone's total, best first ---------- */
@@ -797,7 +965,8 @@ function drawRanksTop(g, w, h){
     const cy = y + rh * 0.43, fs = Math.round(rh * 0.46);
     if (i < 3) trophy(g, w * 0.085, cy, rh * 0.62, medal[i]);
     else { g.fillStyle = '#8b93a5'; g.font = '700 ' + fs + 'px ' + FONT; g.textAlign = 'center'; g.fillText(String(i + 1), w * 0.085, cy + 2); }
-    g.fillStyle = '#1d2433'; g.font = (mine ? '700 ' : '600 ') + fs + 'px ' + FONT; g.textAlign = 'left'; g.fillText(r.name, w * 0.14, cy + 2);
+    g.save(); g.beginPath(); g.arc(w * 0.155, cy, rh * 0.38, 0, Math.PI * 2); g.fillStyle = '#dff1fb'; g.fill(); g.clip(); drawAvatar(g, w * 0.155, cy + rh * 0.04, rh * 1.0, r.avatar || AVATAR_DEFAULT, 'face'); g.restore();
+    g.fillStyle = '#1d2433'; g.font = (mine ? '700 ' : '600 ') + fs + 'px ' + FONT; g.textAlign = 'left'; g.fillText(r.name, w * 0.2, cy + 2);
     g.fillStyle = '#2f6fd8'; g.font = '700 ' + fs + 'px ' + FONT; g.textAlign = 'right'; g.fillText(r.points + ' pts', w * 0.93, cy + 2);
   });
 }
@@ -808,7 +977,7 @@ function drawRanksBottom(g, w, h){
   if (me){
     const pos = board.findIndex((r) => r.name === me.name) + 1;
     g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(h * 0.06) + 'px ' + FONT; g.fillText(me.name, w / 2, h * 0.14);
-    trophy(g, w / 2, h * 0.36, h * 0.26, '#f2a91c');
+    drawAvatar(g, w / 2, h * 0.37, h * 0.36, me.avatar || AVATAR_DEFAULT); trophy(g, w / 2 + h * 0.2, h * 0.47, h * 0.12, '#f2a91c');
     g.fillStyle = '#1d2433'; g.font = '700 ' + Math.round(h * 0.11) + 'px ' + FONT; g.fillText('#' + (pos || '-'), w / 2, h * 0.6);
     g.fillStyle = '#2f6fd8'; g.font = '700 ' + Math.round(h * 0.06) + 'px ' + FONT;
     g.fillText(me.points + ' pts · ' + me.games + (ES ? ' partidas' : (me.games === 1 ? ' game' : ' games')), w / 2, h * 0.73);
@@ -886,3 +1055,123 @@ form.addEventListener('submit', async (e) => {
 /* when the console switches on and nobody is signed in, ask */
 const booted = Date.now();
 store.ready.then(() => { paint('top'); if (!store.user() && !EMBED) setTimeout(() => openSheet('auth'), Math.max(0, (reduce ? 0 : 1300) - (Date.now() - booted))); });
+
+/* ---------- avatar editor: parts on the touch screen, the character alive in 3D on the top screen ---------- */
+const AV_TABS = [
+  { key: 'face', en: 'Face', es: 'Cara', n: AV.face, view: 'face' },
+  { key: 'skin', en: 'Skin', es: 'Piel', n: AV.skin.length, color: AV.skin },
+  { key: 'hair', en: 'Hair', es: 'Pelo', n: AV.hair, view: 'face' },
+  { key: 'hairColor', en: 'Colour', es: 'Color', n: AV.hairColor.length, color: AV.hairColor },
+  { key: 'brows', en: 'Brows', es: 'Cejas', n: AV.brows, view: 'face' },
+  { key: 'eyes', en: 'Eyes', es: 'Ojos', n: AV.eyes, view: 'face' },
+  { key: 'nose', en: 'Nose', es: 'Nariz', n: AV.nose, view: 'face' },
+  { key: 'mouth', en: 'Mouth', es: 'Boca', n: AV.mouth, view: 'face' },
+  { key: 'glasses', en: 'Glasses', es: 'Lentes', n: AV.glasses, view: 'face' },
+  { key: 'hat', en: 'Hat', es: 'Gorro', n: AV.hat, view: 'face' },
+  { key: 'shirt', en: 'Shirt', es: 'Polo', n: AV.shirt.length, color: AV.shirt },
+];
+const ed = { tab: 0, draft: null, saving: false };
+const topRT = new THREE.WebGLRenderTarget(1278, 768, { samples: 4 }); topRT.texture.colorSpace = THREE.SRGBColorSpace;
+const bgCanvas = document.createElement('canvas'); bgCanvas.width = 1278; bgCanvas.height = 768;
+const bgTex = new THREE.CanvasTexture(bgCanvas); bgTex.colorSpace = THREE.SRGBColorSpace;
+function paintAvatarBackdrop(){
+  const g = bgCanvas.getContext('2d'), w = bgCanvas.width, h = bgCanvas.height;
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, '#eef8ff'); grd.addColorStop(1, '#cfe5f6');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.ellipse(w / 2, h * 0.92, w * 0.17, h * 0.045, 0, 0, Math.PI * 2); g.fill();
+  const me = store.user();
+  g.fillStyle = '#1d2433'; g.font = '700 ' + Math.round(h * 0.06) + 'px ' + FONT; g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText(ES ? 'Tu personaje' : 'Your avatar', w * 0.04, h * 0.085);
+  if (me){ g.fillStyle = '#5b6375'; g.font = '600 ' + Math.round(h * 0.05) + 'px ' + FONT; g.textAlign = 'right'; g.fillText(me.name, w * 0.96, h * 0.085); }
+  bgTex.needsUpdate = true;
+}
+function rebuildLive(){
+  if (avRig){ avScene.remove(avRig); disposeTree(avRig); }
+  avRig = buildAvatar(ed.draft, faceCanvas, faceTex); avScene.add(avRig);
+}
+let canvasMap = null, blinkAt = 0, blinking = false;
+function openAvatar(){
+  ed.tab = 0; ed.draft = avatarOf((store.user() || {}).avatar); game.mode = 'avatar';
+  paintAvatarBackdrop(); rebuildLive();
+  canvasMap = screens.top.lcd.material.map; screens.top.lcd.material.map = topRT.texture; screens.top.lcd.material.needsUpdate = true;
+  painters.bottom = drawAvatarBottom; paint('bottom');
+  if (goal !== OPEN) goal = OPEN;
+  focusCamera(true);
+}
+function closeAvatar(){
+  if (canvasMap){ screens.top.lcd.material.map = canvasMap; screens.top.lcd.material.needsUpdate = true; canvasMap = null; }
+  if (avRig){ avScene.remove(avRig); disposeTree(avRig); avRig = null; }
+}
+/* while editing: the character breathes, sways, looks about and blinks */
+tickers.push((dt) => {
+  if (game.mode !== 'avatar' || !avRig) return;
+  const t = performance.now() / 1000;
+  avRig.position.y = Math.sin(t * 2.1) * 0.04;
+  avRig.rotation.y = Math.sin(t * 0.6) * 0.28;
+  avRig.userData.head.rotation.z = Math.sin(t * 0.9) * 0.05;
+  avRig.userData.head.rotation.x = Math.sin(t * 0.7) * 0.04;
+  if (!blinking && t > blinkAt){ blinking = true; paintFace(faceCanvas.getContext('2d'), 1024, 512, ed.draft, true); faceTex.needsUpdate = true;
+    setTimeout(() => { blinking = false; blinkAt = performance.now() / 1000 + 2 + Math.random() * 3; if (game.mode === 'avatar'){ paintFace(faceCanvas.getContext('2d'), 1024, 512, ed.draft, false); faceTex.needsUpdate = true; } }, 130); }
+  frame(avCam, 'body', 1278 / 768);
+  avScene.background = bgTex;
+  renderer.setRenderTarget(topRT); renderer.render(avScene, avCam); renderer.setRenderTarget(null);
+});
+
+/* layout of the touch screen, shared by drawing and clicking: two rows of tabs, 4x2 options, back / save */
+function avLayout(w, h){
+  const rows = [AV_TABS.slice(0, 6), AV_TABS.slice(6)], tabs = [];
+  rows.forEach((row, ri) => { const tw = w * 0.92 / 6; row.forEach((t, i) => { const off = (6 - row.length) * tw / 2; tabs.push({ x: w * 0.04 + off + i * tw + 3, y: h * 0.025 + ri * h * 0.105, w: tw - 6, h: h * 0.09 }); }); });
+  const s = h * 0.245, gap = s * 0.16, cols = 4, gridW = cols * s + (cols - 1) * gap, x0 = (w - gridW) / 2, y0 = h * 0.245;
+  const opts = []; for (let i = 0; i < 8; i++) opts.push({ x: x0 + (i % cols) * (s + gap), y: y0 + Math.floor(i / cols) * (s + gap), w: s, h: s });
+  const bh = h * 0.11, by = h - bh - h * 0.02;
+  return { tabs, opts, back: { x: w * 0.04, y: by, w: w * 0.44, h: bh }, save: { x: w * 0.52, y: by, w: w * 0.44, h: bh } };
+}
+function drawAvatarBottom(g, w, h){
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, '#f3f5fa'); grd.addColorStop(1, '#e1e6ef');
+  g.fillStyle = grd; g.fillRect(0, 0, w, h);
+  const L = avLayout(w, h), tab = AV_TABS[ed.tab];
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  L.tabs.forEach((r, i) => {
+    const on = i === ed.tab;
+    g.fillStyle = on ? '#5b8dff' : 'rgba(255,255,255,.92)'; g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.h * 0.32); g.fill();
+    g.fillStyle = on ? '#fff' : '#5b6375'; g.font = '700 ' + Math.round(r.h * 0.4) + 'px ' + FONT;
+    g.fillText(ES ? AV_TABS[i].es : AV_TABS[i].en, r.x + r.w / 2, r.y + r.h / 2 + 1);
+  });
+  for (let i = 0; i < tab.n; i++){
+    const r = L.opts[i];
+    shadowed(g, () => { g.fillStyle = '#fff'; g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.w * 0.2); g.fill(); }, r.w * 0.1, r.w * 0.03);
+    if (tab.color){ g.fillStyle = tab.color[i]; g.beginPath(); g.arc(r.x + r.w / 2, r.y + r.h / 2, r.w * 0.3, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 2; g.stroke(); }
+    else {
+      const look = Object.assign({}, ed.draft, { [tab.key]: i });
+      g.save(); g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.w * 0.2); g.clip();
+      drawAvatar(g, r.x + r.w / 2, r.y + r.h / 2, r.w * 1.02, look, tab.view); g.restore();
+    }
+    if (ed.draft[tab.key] === i) brackets(g, r.x, r.y, r.w);
+  }
+  const btn = (r, label, main) => {
+    shadowed(g, () => { const gr = g.createLinearGradient(0, r.y, 0, r.y + r.h); gr.addColorStop(0, main ? '#6b9bff' : '#ffffff'); gr.addColorStop(1, main ? '#3f74ea' : '#e4e8ef'); g.fillStyle = gr; g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, r.h * 0.35); g.fill(); }, 8, 2);
+    g.fillStyle = main ? '#fff' : '#4a5160'; g.font = '600 ' + Math.round(r.h * 0.5) + 'px ' + FONT; g.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 2);
+  };
+  btn(L.back, ES ? 'Volver' : 'Back', false);
+  btn(L.save, ed.saving ? '…' : (ES ? 'Guardar' : 'Save'), true);
+}
+function avatarTarget(p){
+  const L = avLayout(p.w, p.h), inside = (r) => p.x > r.x && p.x < r.x + r.w && p.y > r.y && p.y < r.y + r.h;
+  for (let i = 0; i < L.tabs.length; i++) if (inside(L.tabs[i])) return { tab: i };
+  for (let i = 0; i < AV_TABS[ed.tab].n; i++) if (inside(L.opts[i])) return { opt: i };
+  if (inside(L.back)) return 'back';
+  if (inside(L.save)) return 'save';
+  return null;
+}
+function avatarClick(t){
+  if (!t || ed.saving) return;
+  if (t === 'back'){ closeAvatar(); quitGame(); return; }
+  if (t === 'save'){
+    ed.saving = true; paint('bottom');
+    store.setAvatar(ed.draft).catch(() => {}).then(() => { ed.saving = false; closeAvatar(); quitGame(); });
+    return;
+  }
+  if (t.tab != null) ed.tab = t.tab;
+  if (t.opt != null){ ed.draft[AV_TABS[ed.tab].key] = t.opt; rebuildLive(); }
+  paint('bottom');
+}
