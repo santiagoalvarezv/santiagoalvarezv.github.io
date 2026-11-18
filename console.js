@@ -205,9 +205,9 @@ const AV = {
   skin:  ['#fde3cf', '#f6cda6', '#e8b184', '#cf8f5c', '#9c6038', '#62391d'],
   hairColor: ['#24201e', '#4f3020', '#8a5a2e', '#d9a95c', '#f0dfa1', '#b8392d', '#9097a1', '#3b5bdb'],
   shirt: ['#3f74ea', '#e8463a', '#3fb27f', '#f2a91c', '#8e5bd8', '#2a3142', '#ff8fb3', '#f4f4f2'],
-  face: 3, hair: 8, brows: 4, eyes: 6, nose: 3, mouth: 6, glasses: 4, hat: 3,
+  body: 2, face: 3, hair: 8, brows: 4, eyes: 6, nose: 3, mouth: 6, glasses: 4, hat: 3,
 };
-const AVATAR_DEFAULT = { face: 0, skin: 1, hair: 0, hairColor: 1, brows: 0, eyes: 0, nose: 0, mouth: 0, glasses: 0, hat: 0, shirt: 0 };
+const AVATAR_DEFAULT = { body: 0, face: 0, skin: 1, hair: 0, hairColor: 1, brows: 0, eyes: 0, nose: 0, mouth: 0, glasses: 0, hat: 0, shirt: 0 };
 function avatarOf(a){ const o = Object.assign({}, AVATAR_DEFAULT); if (a) for (const k in o) if (Number.isInteger(a[k]) && a[k] >= 0) o[k] = a[k]; return o; }
 function shade(hex, f){ const n = parseInt(hex.slice(1), 16), c = (v) => Math.max(0, Math.min(255, Math.round(v * f))); return 'rgb(' + c(n >> 16) + ',' + c((n >> 8) & 255) + ',' + c(n & 255) + ')'; }
 const pickc = (arr, i) => arr[i % arr.length];
@@ -309,15 +309,22 @@ function buildAvatar(raw, canvas, tex){
     [-1, 1].forEach((d) => { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.75, 6), gm); arm.rotation.x = Math.PI / 2; arm.position.set(d * 0.5, 0.08, 0.72); arm.rotation.y = d * 0.55; unit.add(arm); });
     const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8), gm); bridge.rotation.z = Math.PI / 2; bridge.position.set(0, 0.1, 1.12); unit.add(bridge);
   }
-  /* body: small, under the big head */
-  const shirtM = mat(sh, 0.75), pantsM = mat('#34405a', 0.8), shoeM = mat('#f4f4f2', 0.6);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.3, 16), skinM); neck.position.y = -1.08; grp.add(neck);
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.15, 1, 0.85); torso.position.y = -1.62; grp.add(torso);
+  /* body: small, under the big head. 0 = man (broader, straight), 1 = woman (narrower shoulders, a waist and a skirt) */
+  const shirtM = mat(sh, 0.75), pantsM = mat('#34405a', 0.8), shoeM = mat('#f4f4f2', 0.6), woman = a.body === 1;
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(woman ? 0.17 : 0.2, woman ? 0.19 : 0.22, 0.3, 16), skinM); neck.position.y = -1.08; grp.add(neck);
+  if (!woman){
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.45, 8, 24), shirtM); torso.scale.set(1.22, 1, 0.88); torso.position.y = -1.62; grp.add(torso);
+  } else {
+    const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.22, 8, 24), shirtM); chest.scale.set(1.05, 1, 0.82); chest.position.y = -1.5; grp.add(chest);
+    const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.22, 24), shirtM); waist.position.y = -1.8; grp.add(waist);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.52, 0.42, 28, 1, true), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade(sh, 0.72)), roughness: 0.8, side: THREE.DoubleSide, envMapIntensity: 0.6 })); skirt.position.y = -2.08; grp.add(skirt);
+  }
   [-1, 1].forEach((d) => {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.5, 6, 12), shirtM); arm.position.set(d * 0.6, -1.66, 0); arm.rotation.z = d * 0.32; grp.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), skinM); hand.position.set(d * 0.73, -2.02, 0.02); grp.add(hand);
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.4, 6, 12), pantsM); leg.position.set(d * 0.2, -2.35, 0); grp.add(leg);
-    const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 12), shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * 0.2, -2.68, 0.08); grp.add(shoe);
+    const sx = woman ? 0.5 : 0.64;
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.11 : 0.13, 0.5, 6, 12), shirtM); arm.position.set(d * sx, -1.66, 0); arm.rotation.z = d * (woman ? 0.22 : 0.32); grp.add(arm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.12 : 0.14, 16, 12), skinM); hand.position.set(d * (sx + (woman ? 0.08 : 0.13)), -2.02, 0.02); grp.add(hand);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(woman ? 0.12 : 0.15, woman ? 0.32 : 0.4, 6, 12), woman ? skinM : pantsM); leg.position.set(d * (woman ? 0.17 : 0.2), woman ? -2.42 : -2.35, 0); grp.add(leg);
+    const shoe = new THREE.Mesh(new THREE.SphereGeometry(woman ? 0.16 : 0.19, 16, 12), woman ? mat(shade(sh, 0.6), 0.5) : shoeM); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(d * (woman ? 0.17 : 0.2), -2.68, 0.08); grp.add(shoe);
   });
   grp.userData = { head, look: a };
   return grp;
@@ -1084,6 +1091,7 @@ store.ready.then(() => { paint('top'); if (!store.user() && !EMBED) setTimeout((
 
 /* ---------- avatar editor: parts on the touch screen, the character alive in 3D on the top screen ---------- */
 const AV_TABS = [
+  { key: 'body', en: 'Body', es: 'Cuerpo', n: AV.body, view: 'body' },
   { key: 'face', en: 'Face', es: 'Cara', n: AV.face, view: 'face' },
   { key: 'skin', en: 'Skin', es: 'Piel', n: AV.skin.length, color: AV.skin },
   { key: 'hair', en: 'Hair', es: 'Pelo', n: AV.hair, view: 'face' },
@@ -1109,6 +1117,8 @@ function paintAvatarBackdrop(){
   g.fillStyle = '#1d2433'; g.font = '700 ' + Math.round(h * 0.06) + 'px ' + FONT; g.textAlign = 'left'; g.textBaseline = 'middle';
   g.fillText(ES ? 'Tu personaje' : 'Your avatar', w * 0.04, h * 0.085);
   if (me){ g.fillStyle = '#5b6375'; g.font = '600 ' + Math.round(h * 0.05) + 'px ' + FONT; g.textAlign = 'right'; g.fillText(me.name, w * 0.96, h * 0.085); }
+  g.fillStyle = '#8b93a5'; g.font = '600 ' + Math.round(h * 0.04) + 'px ' + FONT; g.textAlign = 'center';
+  g.fillText(ES ? 'arrastra para girarlo' : 'drag to turn it around', w / 2, h * 0.965);
   bgTex.needsUpdate = true;
 }
 function rebuildLive(){
@@ -1116,8 +1126,9 @@ function rebuildLive(){
   avRig = buildAvatar(ed.draft, faceCanvas, faceTex); avScene.add(avRig);
 }
 let canvasMap = null, blinkAt = 0, blinking = false;
+const spin = { yaw: 0, dragging: false, x: 0 };   /* drag the character on the top screen to turn it all the way round */
 function openAvatar(){
-  ed.tab = 0; ed.draft = avatarOf((store.user() || {}).avatar); game.mode = 'avatar';
+  ed.tab = 0; ed.draft = avatarOf((store.user() || {}).avatar); game.mode = 'avatar'; spin.yaw = 0;
   paintAvatarBackdrop(); rebuildLive();
   canvasMap = screens.top.lcd.material.map; screens.top.lcd.material.map = topRT.texture; screens.top.lcd.material.needsUpdate = true;
   painters.bottom = drawAvatarBottom; paint('bottom');
@@ -1133,7 +1144,7 @@ tickers.push((dt) => {
   if (game.mode !== 'avatar' || !avRig) return;
   const t = performance.now() / 1000;
   avRig.position.y = Math.sin(t * 2.1) * 0.04;
-  avRig.rotation.y = Math.sin(t * 0.6) * 0.28;
+  avRig.rotation.y = spin.yaw + (spin.dragging ? 0 : Math.sin(t * 0.6) * 0.18);
   avRig.userData.head.rotation.z = Math.sin(t * 0.9) * 0.05;
   avRig.userData.head.rotation.x = Math.sin(t * 0.7) * 0.04;
   if (!blinking && t > blinkAt){ blinking = true; paintFace(faceCanvas.getContext('2d'), 1024, 512, ed.draft, true); faceTex.needsUpdate = true;
@@ -1247,3 +1258,15 @@ addEventListener('keydown', (e) => {
   if (!k) return;
   e.preventDefault(); press(k, null);
 });
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (game.mode !== 'avatar') return;
+  const p = screenAt(e); if (!p || p.kind !== 'top') return;
+  spin.dragging = true; spin.x = e.clientX; controls.enabled = false;   /* the console stays still while you turn the character */
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!spin.dragging) return;
+  spin.yaw += (e.clientX - spin.x) * 0.012; spin.x = e.clientX;
+});
+['pointerup', 'pointercancel'].forEach((ev) => renderer.domElement.addEventListener(ev, () => { if (spin.dragging){ spin.dragging = false; controls.enabled = true; } }));
