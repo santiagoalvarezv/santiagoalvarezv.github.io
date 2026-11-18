@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js?v=4';
+import { SUPABASE_URL, SUPABASE_KEY } from './games/config.js?v=7';
 
 /* ---------- sizes (mm), roughly a big-screen clamshell handheld ---------- */
 const W = 156, D = 93;          /* width and depth of each half */
@@ -36,7 +36,8 @@ controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.enablePan = false;
 if (EMBED){ controls.enableZoom = false; renderer.domElement.style.touchAction = 'pan-y'; }   /* the page keeps its scroll */
 controls.minDistance = 220; controls.maxDistance = 900;
-controls.minPolarAngle = 0.15; controls.maxPolarAngle = Math.PI / 2 - 0.04;
+controls.minPolarAngle = 0.35; controls.maxPolarAngle = 1.45;
+controls.minAzimuthAngle = -0.9; controls.maxAzimuthAngle = 0.9;   /* keep the console facing you: no sideways or upside-down views */
 controls.target.set(0, 42, 18);
 camera.position.set(0, 215, 330);
 
@@ -200,7 +201,7 @@ const APPS = [
   { id: 'maps', name: 'Maps', on: true }, { id: 'ranks', name: 'Rankings', on: true }, { id: 'settings', name: 'Settings', on: true },
   { id: 'camera', name: 'Camera' }, { id: 'music', name: 'Music' }, { id: 'mail', name: 'Mail' }, { id: 'notes', name: 'Notes' }, { id: 'web', name: 'Browser' },
 ];
-const SELECTED = 'maps';
+let sel = 0;   /* which app the menu has selected; the d-pad moves it */
 
 function backdrop(g, w, h){
   const grd = g.createLinearGradient(0, 0, 0, h);
@@ -317,7 +318,7 @@ function drawBottom(g, w, h){
   APPS.forEach((app, i) => {
     const c = i % cols, r2 = Math.floor(i / cols), x = x0 + c * (s + gap), y = y0 + r2 * (s + gap);
     drawIcon(g, app, x, y, s);
-    if (app.id === SELECTED) brackets(g, x, y, s);
+    if (i === sel) brackets(g, x, y, s);
   });
   /* the button at the bottom */
   const bh = h * 0.12, by = h - bh - h * 0.02;
@@ -345,9 +346,14 @@ function drawTop(g, w, h){
   /* the selected app's banner */
   const bw = w * 0.62, bh = h * 0.66, bx = (w - bw) / 2, by = sb + (h - sb - bh) / 2 - h * 0.02;
   shadowed(g, () => { g.fillStyle = '#fff'; g.beginPath(); g.roundRect(bx - h * 0.02, by - h * 0.02, bw + h * 0.04, bh + h * 0.04, h * 0.07); g.fill(); }, h * 0.06, h * 0.02);
-  drawMap(g, bx, by, bw, bh, h * 0.055, true);
+  const app = APPS[sel];
+  if (app.id === 'maps') drawMap(g, bx, by, bw, bh, h * 0.055, true);
+  else {
+    g.fillStyle = '#f6f8fc'; g.beginPath(); g.roundRect(bx, by, bw, bh, h * 0.055); g.fill();
+    drawIcon(g, app, bx + bw / 2 - bh * 0.3, by + bh * 0.12, bh * 0.6);
+  }
   /* its name on a pill */
-  const label = 'Maps', fs = Math.round(h * 0.08); g.font = '700 ' + fs + 'px ' + FONT;
+  const label = app.name, fs = Math.round(h * 0.08); g.font = '700 ' + fs + 'px ' + FONT;
   const lw = g.measureText(label).width + fs * 1.4, lx = bx + bw * 0.06, ly = by + bh - fs * 1.9;
   shadowed(g, () => { g.fillStyle = 'rgba(255,255,255,.96)'; g.beginPath(); g.roundRect(lx, ly, lw, fs * 1.45, fs * 0.72); g.fill(); }, 10, 3);
   g.fillStyle = '#2f6fd8'; g.textAlign = 'left'; g.fillText(label, lx + fs * 0.7, ly + fs * 0.78);
@@ -377,6 +383,7 @@ function paint(kind){
 /* the clock on the top screen keeps time */
 setInterval(() => paint('top'), 30000);
 const tickers = [];
+const BUTTONS = [];   /* the physical buttons you can press: d-pad, A B X Y, select, home, start */
 
 /* =========================================================
    bottom half: built lying in XY (y = 0 at the hinge edge, y < 0 toward you), face at z = TB,
@@ -399,7 +406,7 @@ scene.add(bottom);
   B.add(at(slab(82, 6.6, 2.2, 0.5, 0.15, M.ring), 0, -86.3, Z));
   [['SELECT', -26.6], ['HOME', 0], ['START', 26.6]].forEach(([t, x]) => {
     const k = new THREE.Mesh(new RoundedBoxGeometry(25, 4.8, 1.4, 3, 0.5), M.key);
-    B.add(at(k, x, -86.3, Z + 0.7)); k.castShadow = true;
+    B.add(at(k, x, -86.3, Z + 0.7)); k.castShadow = true; k.userData.btn = t.toLowerCase(); BUTTONS.push(k);
     B.add(at(print(t === 'HOME' ? '⌂  HOME' : t, 22, 3.2, { size: 0.66, spacing: 2, color: 'rgba(170,170,166,.9)' }), x, -86.3, Z + 1.42));
   });
 
@@ -412,7 +419,7 @@ scene.add(bottom);
   B.add(at(disc(10.8, 0.5, M.ring), -61.5, -61, Z + 0.1));
   const armA = new THREE.Mesh(new RoundedBoxGeometry(18.4, 5.9, 2.1, 3, 0.8), M.key);
   const armB = new THREE.Mesh(new RoundedBoxGeometry(5.9, 18.4, 2.1, 3, 0.8), M.key);
-  [armA, armB].forEach((a) => { a.castShadow = true; B.add(at(a, -61.5, -61, Z + 1.0)); });
+  [armA, armB].forEach((a) => { a.castShadow = true; B.add(at(a, -61.5, -61, Z + 1.0)); a.userData.btn = 'dpad'; BUTTONS.push(a); });
   [[0, 5.9], [0, -5.9], [-5.9, 0], [5.9, 0]].forEach(([dx, dy]) => {   /* little raised lines on each arm */
     const l = new THREE.Mesh(new THREE.BoxGeometry(dx ? 2.9 : 0.6, dy ? 2.9 : 0.6, 0.25), M.ring);
     B.add(at(l, -61.5 + dx, -61 + dy, Z + 2.1));
@@ -422,7 +429,7 @@ scene.add(bottom);
   const cx = 61.5, cy = -29.5, o = 8.9;
   [['X', 0, o], ['B', 0, -o], ['Y', -o, 0], ['A', o, 0]].forEach(([t, dx, dy]) => {
     B.add(at(disc(5.0, 0.5, M.ring), cx + dx, cy + dy, Z + 0.1));
-    B.add(at(disc(4.3, 2.1, M.key), cx + dx, cy + dy, Z + 1.0));
+    const key = disc(4.3, 2.1, M.key); key.userData.btn = t.toLowerCase(); BUTTONS.push(key); B.add(at(key, cx + dx, cy + dy, Z + 1.0));
     const face = new THREE.Mesh(new THREE.CircleGeometry(3.8, 40), new THREE.MeshBasicMaterial({
       transparent: true, depthWrite: false,
       map: canvasTex(128, 128, (g) => {
@@ -613,7 +620,16 @@ function drawGameBottom(g, w, h){
   g.fillStyle = '#2f6fd8'; g.font = '700 ' + Math.round(h * 0.2) + 'px ' + FONT; g.fillText(String(game.score), w / 2, h * 0.6);
   g.fillStyle = '#8b93a5'; g.font = '500 ' + Math.round(h * 0.045) + 'px ' + FONT;
   g.fillText(ES ? 'cada fallo resta 4' : 'every miss costs 4', w / 2, h * 0.74);
-  bottomButton(g, w, h, game.mode === 'done' ? (ES ? 'Jugar otra vez' : 'Play again') : (ES ? 'Volver' : 'Back'));
+  if (game.mode === 'done') twoButtons(g, w, h, ES ? 'Inicio' : 'Home', ES ? 'Jugar otra vez' : 'Play again');
+  else bottomButton(g, w, h, ES ? 'Volver' : 'Back');
+}
+function twoButtons(g, w, h, left, right){
+  const bh = h * 0.12, by = h - bh - h * 0.02;
+  [[w * 0.04, left, false], [w * 0.52, right, true]].forEach(([x, label, main]) => {
+    shadowed(g, () => { const gr = g.createLinearGradient(0, by, 0, by + bh); gr.addColorStop(0, main ? '#6b9bff' : '#ffffff'); gr.addColorStop(1, main ? '#3f74ea' : '#e4e8ef'); g.fillStyle = gr; g.beginPath(); g.roundRect(x, by, w * 0.44, bh, bh * 0.35); g.fill(); }, 8, 2);
+    g.fillStyle = main ? '#fff' : '#4a5160'; g.font = '600 ' + Math.round(bh * 0.5) + 'px ' + FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(label, x + w * 0.22, by + bh / 2 + 2);
+  });
 }
 function bottomButton(g, w, h, label){
   const bh = h * 0.12, by = h - bh - h * 0.02;
@@ -700,19 +716,20 @@ let downAt = null;
 renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;   /* that was a drag */
+  const b = buttonAt(e); if (b){ press(b.name, b.mesh); return; }
   const p = screenAt(e); if (!p) return;
   if (game.mode === 'menu'){
     const t = p.kind === 'bottom' && menuTarget(p);
-    if (t === 'open') openApp(SELECTED); else if (t && t.on) openApp(t.id);
+    if (t === 'open') openApp(APPS[sel].id); else if (t){ sel = APPS.indexOf(t); paint('top'); paint('bottom'); if (t.on) openApp(t.id); }
   } else if (p.kind === 'top' && game.mode === 'game'){
     const i = regionAt(p); if (i != null) pick(i);
   } else if (p.kind === 'bottom' && isButton(p)){
-    if (game.mode === 'done') startGame(); else quitGame();
+    if (game.mode === 'done' && p.x > p.w / 2) startGame(); else quitGame();
   }
 });
 renderer.domElement.addEventListener('pointermove', (e) => {
   const p = screenAt(e);
-  let pointer = false;
+  let pointer = !!buttonAt(e);
   if (p && game.mode === 'menu' && p.kind === 'bottom'){ const t = menuTarget(p); pointer = t === 'open' || !!(t && t.on); }
   if (p && game.mode !== 'menu' && p.kind === 'bottom') pointer = isButton(p);
   if (game.mode === 'game'){
@@ -722,23 +739,30 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   }
   renderer.domElement.style.cursor = pointer ? 'pointer' : '';
 });
-renderer.domElement.addEventListener('dblclick', (e) => { if (!screenAt(e) && game.mode === 'menu') toggleLid(); });
+renderer.domElement.addEventListener('dblclick', (e) => { if (!screenAt(e) && !buttonAt(e) && game.mode === 'menu') toggleLid(); });
 
 /* while playing, the camera leans in to face the top screen; going back returns it */
-const home = { pos: camera.position.clone(), target: controls.target.clone() };
+/* the view the page opens with: every app returns here, whatever angle you left it at */
+const home = { pos: null, target: null };
+setTimeout(() => { home.pos = camera.position.clone(); home.target = controls.target.clone(); }, 0);
 let tween = null;
 function focusCamera(on){
   const hint = document.querySelector('.hint'); if (hint) hint.style.opacity = on ? '0' : '';
   let toPos, toTarget;
   if (on){
-    home.pos.copy(camera.position); home.target.copy(controls.target);
     const c = new THREE.Vector3(), n = new THREE.Vector3(0, 0, 1);
     hinge.rotation.x = angle = OPEN;   /* aim at where the lid will be */
     hinge.updateMatrixWorld(true);
     screens.top.lcd.getWorldPosition(c);
     n.applyQuaternion(screens.top.lcd.getWorldQuaternion(new THREE.Quaternion()));
-    const fovFit = (106.5 * 1.18 / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / Math.min(1, camera.aspect / 1.6);
-    toTarget = c.clone().add(new THREE.Vector3(0, -12, 0)); toPos = c.clone().add(n.multiplyScalar(fovFit)).add(new THREE.Vector3(0, -6, 18));
+    /* frame both screens, so the buttons on the touch screen (back, home, play again) stay in view */
+    const cb = new THREE.Vector3(); screens.bottom.lcd.getWorldPosition(cb);
+    const mid = c.clone().lerp(cb, 0.42), span = c.distanceTo(cb) + 64 + 30;
+    const fitH = (span / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const fitW = (106.5 * 1.25 / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.aspect;
+    const dist = Math.max(fitH, fitW, controls.minDistance + 5);
+    const dir = n.clone().add(new THREE.Vector3(0, 0.55, 0.35)).normalize();
+    toTarget = mid; toPos = mid.clone().add(dir.multiplyScalar(dist));
   } else { toPos = home.pos.clone(); toTarget = home.target.clone(); }
   tween = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), p1: toPos, t1: toTarget };
 }
@@ -886,3 +910,49 @@ form.addEventListener('submit', async (e) => {
 /* when the console switches on and nobody is signed in, ask */
 const booted = Date.now();
 store.ready.then(() => { paint('top'); if (!store.user() && !EMBED) setTimeout(() => openSheet('auth'), Math.max(0, (reduce ? 0 : 1300) - (Date.now() - booted))); });
+
+/* ---------- the physical buttons work too ----------
+   d-pad moves the selection in the menu, A / SELECT / START open it, B goes back, HOME always goes home.
+   the keyboard does the same: arrows, enter, escape, h. */
+function buttonAt(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(BUTTONS, false)[0];
+  if (!hit) return null;
+  let name = hit.object.userData.btn;
+  if (name === 'dpad'){   /* which arm of the cross: compare the hit point with the cross's centre */
+    const q = bottom.worldToLocal(hit.point.clone()), dx = q.x + 61.5, dy = q.y + 61;
+    if (Math.hypot(dx, dy) < 2.2) return null;
+    name = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'up' : 'down');
+  }
+  return { name, mesh: hit.object };
+}
+function sink(mesh){   /* the button dips for a moment */
+  if (!mesh || mesh.userData.down) return;
+  mesh.userData.down = true; mesh.position.z -= 0.6;
+  setTimeout(() => { mesh.position.z += 0.6; mesh.userData.down = false; }, 130);
+}
+function press(name, mesh){
+  sink(mesh);
+  if (!sheet.hidden) return;
+  if (name === 'home'){ if (game.mode !== 'menu') quitGame(); return; }
+  if (game.mode === 'menu'){
+    const cols = 4, n = APPS.length;
+    if (name === 'left' && sel % cols) sel--;
+    if (name === 'right' && sel % cols < cols - 1 && sel + 1 < n) sel++;
+    if (name === 'up' && sel - cols >= 0) sel -= cols;
+    if (name === 'down' && sel + cols < n) sel += cols;
+    if (['a', 'select', 'start'].includes(name) && APPS[sel].on) openApp(APPS[sel].id);
+    if (['left', 'right', 'up', 'down'].includes(name)){ paint('top'); paint('bottom'); }
+    return;
+  }
+  if (game.mode === 'done'){ if (['a', 'start', 'select'].includes(name)) startGame(); if (name === 'b') quitGame(); return; }
+  if (name === 'b') quitGame();
+}
+addEventListener('keydown', (e) => {
+  if (!sheet.hidden || e.target.tagName === 'INPUT') return;
+  const k = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Enter: 'a', ' ': 'a', Escape: 'b', Backspace: 'b', h: 'home', H: 'home' }[e.key];
+  if (!k) return;
+  e.preventDefault(); press(k, null);
+});
